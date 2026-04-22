@@ -180,6 +180,7 @@ function Field({ label, value, onChange, placeholder, type = "text", error, pref
 
 function CreateScreen({ onViewPay }) {
   const [form, setForm] = useState({ recipient: "", amount: "", description: "" });
+  const handleViewPay = () => onViewPay(form);
   const [errors, setErrors] = useState({});
   const [link, setLink] = useState("");
   function set(k) { return v => setForm(f => ({ ...f, [k]: v })); }
@@ -237,7 +238,7 @@ function CreateScreen({ onViewPay }) {
             <span style={{ color: "#4A7090", fontSize: 11, fontFamily: "monospace", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{link}</span>
             <CopyBtn text={link} small />
           </div>
-          <button onClick={onViewPay} style={{ width: "100%", marginTop: 10, background: "transparent", border: "1px solid rgba(123,47,255,0.25)", borderRadius: 10, color: "#7AAAC8", fontSize: 12, fontWeight: 600, padding: "10px 0", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s", letterSpacing: "0.04em" }}
+          <button onClick={handleViewPay} style={{ width: "100%", marginTop: 10, background: "transparent", border: "1px solid rgba(123,47,255,0.25)", borderRadius: 10, color: "#7AAAC8", fontSize: 12, fontWeight: 600, padding: "10px 0", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s", letterSpacing: "0.04em" }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(123,47,255,0.6)"; e.currentTarget.style.color = "#9B5FFF"; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(123,47,255,0.25)"; e.currentTarget.style.color = "#7AAAC8"; }}>
             Ver tela de pagamento (demo)
@@ -248,8 +249,12 @@ function CreateScreen({ onViewPay }) {
   );
 }
 
-function PayScreen({ onBack }) {
-  const demo = { recipient: "0xAbCd1234...4F2a", amount: "25.00", description: "Freelance design - invoice #42" };
+function PayScreen({ onBack, data }) {
+  const demo = {
+    recipient: data?.recipient || "0xAbCd1234...4F2a",
+    amount: data?.amount || "25.00",
+    description: data?.description || "Freelance design - invoice #42"
+  };
   const [status, setStatus] = useState("pending");
   function simulatePay() { setStatus("polling"); setTimeout(() => setStatus("paid"), 3000); }
 
@@ -263,7 +268,7 @@ function PayScreen({ onBack }) {
         </div>
       </div>
       <h2 style={{ color: "#10B981", fontSize: 22, fontWeight: 800, marginBottom: 6 }}>Pagamento Confirmado!</h2>
-      <p style={{ color: "#7AAAC8", fontSize: 13, marginBottom: 4 }}>25.00 USDC enviados com sucesso</p>
+      <p style={{ color: "#7AAAC8", fontSize: 13, marginBottom: 4 }}>{demo.amount} USDC enviados com sucesso</p>
       <p style={{ color: "#4A7090", fontSize: 12 }}>Verificado na Arc Testnet</p>
       <div style={{ marginTop: 20, padding: "10px 16px", background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: 10 }}>
         <span style={{ color: "#10B981", fontSize: 11, fontFamily: "monospace" }}>Tx: 0x7f3a...c891</span>
@@ -355,6 +360,7 @@ function HowScreen() {
 
 export default function ArcPay() {
   const [screen, setScreen] = useState("create");
+  const [payData, setPayData] = useState(null);
   const tabs = [{ id: "create", label: "Criar Pedido" }, { id: "how", label: "Como Funciona" }];
 
   return (
@@ -398,9 +404,9 @@ export default function ArcPay() {
             </div>
           )}
 
-          {screen === "create" && <CreateScreen onViewPay={() => setScreen("pay")} />}
+          {screen === "create" && <CreateScreen onViewPay={(data) => { setPayData(data); setScreen("pay"); }} />}
           {screen === "how"    && <HowScreen />}
-          {screen === "pay"    && <PayScreen onBack={() => setScreen("create")} />}
+          {screen === "pay"    && <PayScreen onBack={() => setScreen("create")} data={payData} />}
         </div>
 
         {/* Footer visivel */}
