@@ -186,9 +186,9 @@ function CreateScreen({ onViewPay }) {
   function set(k) { return v => setForm(f => ({ ...f, [k]: v })); }
   function validate() {
     const e = {};
-    if (!form.recipient.match(/^0x[a-fA-F0-9]{40}$/)) e.recipient = "Endereco invalido (0x + 40 hex)";
-    if (!form.amount || isNaN(form.amount) || +form.amount <= 0) e.amount = "Valor invalido";
-    if (!form.description.trim()) e.description = "Descricao obrigatoria";
+    if (!form.recipient.match(/^0x[a-fA-F0-9]{40}$/)) e.recipient = "Invalid address (0x + 40 hex)";
+    if (!form.amount || isNaN(form.amount) || +form.amount <= 0) e.amount = "Invalid amount";
+    if (!form.description.trim()) e.description = "Description obrigatoria";
     return e;
   }
   function generate() {
@@ -210,27 +210,27 @@ function CreateScreen({ onViewPay }) {
         </div>
       </div>
       <p style={{ color: "#7AAAC8", fontSize: 12, textAlign: "center", marginBottom: 22, lineHeight: 1.65 }}>
-        Peca pagamento em USDC na Arc Testnet.<br />Sem ETH, sem taxas volateis.
+        Request USDC payments on Arc Testnet.<br />No ETH needed. Predictable dollar fees.
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <Field label="Endereco do destinatario" value={form.recipient} onChange={set("recipient")} placeholder="0x..." error={errors.recipient} />
-        <Field label="Valor" value={form.amount} onChange={set("amount")} placeholder="0.00" type="number" error={errors.amount} prefix="$" />
-        <Field label="Descricao" value={form.description} onChange={set("description")} placeholder="Ex: freelance design, invoice #42..." error={errors.description} />
+        <Field label="Recipient Address" value={form.recipient} onChange={set("recipient")} placeholder="0x..." error={errors.recipient} />
+        <Field label="Amount" value={form.amount} onChange={set("amount")} placeholder="0.00" type="number" error={errors.amount} prefix="$" />
+        <Field label="Description" value={form.description} onChange={set("description")} placeholder="Ex: freelance design, invoice #42..." error={errors.description} />
         <button onClick={generate} style={{ background: "linear-gradient(135deg, #5500FF 0%, #0099FF 60%, #00C2FF 100%)", border: "none", borderRadius: 12, color: "#fff", fontSize: 14, fontWeight: 800, padding: "14px 0", cursor: "pointer", letterSpacing: "0.05em", fontFamily: "inherit", boxShadow: "0 6px 28px rgba(80,0,255,0.45)", transition: "transform 0.15s, box-shadow 0.15s", textTransform: "uppercase" }}
           onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 10px 36px rgba(80,0,255,0.6)"; }}
           onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(80,0,255,0.45)"; }}>
-          Gerar Link de Pagamento
+          Generate Payment Link
         </button>
       </div>
       {link && (
         <div style={{ marginTop: 20, animation: "fadeUp 0.4s ease both" }}>
           <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "4px 0 16px" }} />
-          <div style={{ marginBottom: 12, display: "flex", justifyContent: "center" }}><Badge color="#10B981">Link gerado com sucesso</Badge></div>
+          <div style={{ marginBottom: 12, display: "flex", justifyContent: "center" }}><Badge color="#10B981">Link generated successfully</Badge></div>
           <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 13, overflow: "hidden", marginBottom: 12 }}>
-            {[["Para", form.recipient.slice(0,6)+"..."+form.recipient.slice(-4)], ["Valor", form.amount + " USDC"], ["Descricao", form.description]].map(([k, v], i) => (
+            {[["To", form.recipient.slice(0,6)+"..."+form.recipient.slice(-4)], ["Amount", form.amount + " USDC"], ["Description", form.description]].map(([k, v], i) => (
               <div key={k} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 15px", borderBottom: i < 2 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
                 <span style={{ color: "#7AAAC8", fontSize: 12 }}>{k}</span>
-                <span style={{ color: k === "Valor" ? "#00C2FF" : "#C8E0F4", fontSize: 13, fontWeight: k === "Valor" ? 800 : 400 }}>{v}</span>
+                <span style={{ color: k === "Amount" ? "#00C2FF" : "#C8E0F4", fontSize: 13, fontWeight: k === "Amount" ? 800 : 400 }}>{v}</span>
               </div>
             ))}
           </div>
@@ -241,7 +241,7 @@ function CreateScreen({ onViewPay }) {
           <button onClick={handleViewPay} style={{ width: "100%", marginTop: 10, background: "transparent", border: "1px solid rgba(123,47,255,0.25)", borderRadius: 10, color: "#7AAAC8", fontSize: 12, fontWeight: 600, padding: "10px 0", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s", letterSpacing: "0.04em" }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(123,47,255,0.6)"; e.currentTarget.style.color = "#9B5FFF"; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(123,47,255,0.25)"; e.currentTarget.style.color = "#7AAAC8"; }}>
-            Ver tela de pagamento (demo)
+            View payment screen (demo)
           </button>
         </div>
       )}
@@ -267,13 +267,13 @@ function PayScreen({ onBack, data }) {
           <div style={{ position: "absolute", inset: -12, borderRadius: "50%", border: "1px solid rgba(16,185,129,0.3)", animation: "ring 1.6s ease 0.4s infinite" }} />
         </div>
       </div>
-      <h2 style={{ color: "#10B981", fontSize: 22, fontWeight: 800, marginBottom: 6 }}>Pagamento Confirmado!</h2>
-      <p style={{ color: "#7AAAC8", fontSize: 13, marginBottom: 4 }}>{demo.amount} USDC enviados com sucesso</p>
-      <p style={{ color: "#4A7090", fontSize: 12 }}>Verificado na Arc Testnet</p>
+      <h2 style={{ color: "#10B981", fontSize: 22, fontWeight: 800, marginBottom: 6 }}>Payment Confirmed!</h2>
+      <p style={{ color: "#7AAAC8", fontSize: 13, marginBottom: 4 }}>{demo.amount} USDC sent successfully</p>
+      <p style={{ color: "#4A7090", fontSize: 12 }}>Verified on Arc Testnet</p>
       <div style={{ marginTop: 20, padding: "10px 16px", background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: 10 }}>
         <span style={{ color: "#10B981", fontSize: 11, fontFamily: "monospace" }}>Tx: 0x7f3a...c891</span>
       </div>
-      <button onClick={onBack} style={{ marginTop: 16, width: "100%", background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#4A7090", fontSize: 12, fontWeight: 600, padding: "10px 0", cursor: "pointer", fontFamily: "inherit" }}>Voltar</button>
+      <button onClick={onBack} style={{ marginTop: 16, width: "100%", background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#4A7090", fontSize: 12, fontWeight: 600, padding: "10px 0", cursor: "pointer", fontFamily: "inherit" }}>Back</button>
     </div>
   );
 
@@ -282,13 +282,13 @@ function PayScreen({ onBack, data }) {
       <div style={{ display: "flex", alignItems: "center", gap: 18, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "18px 20px", marginBottom: 16 }}>
         <USDCCoin size={60} glow />
         <div>
-          <p style={{ color: "#7AAAC8", fontSize: 11, marginBottom: 4, letterSpacing: "0.06em", textTransform: "uppercase" }}>Voce esta pagando</p>
+          <p style={{ color: "#7AAAC8", fontSize: 11, marginBottom: 4, letterSpacing: "0.06em", textTransform: "uppercase" }}>You are paying</p>
           <p style={{ color: "#F0F6FF", fontSize: 32, fontWeight: 800, letterSpacing: "-0.04em", lineHeight: 1 }}>{demo.amount} <span style={{ color: "#1A90FF", fontSize: 18, fontWeight: 700 }}>USDC</span></p>
           <p style={{ color: "#7AAAC8", fontSize: 12, marginTop: 5 }}>{demo.description}</p>
         </div>
       </div>
       <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, overflow: "hidden", marginBottom: 14 }}>
-        {[["Destinatario", demo.recipient, false], ["Rede", null, true], ["Taxa de rede", "~$0.001 USDC", false]].map(([k, v, isNet], i) => (
+        {[["Recipient", demo.recipient, false], ["Rede", null, true], ["Network fee", "~$0.001 USDC", false]].map(([k, v, isNet], i) => (
           <div key={k} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 15px", borderBottom: i < 2 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
             <span style={{ color: "#7AAAC8", fontSize: 12 }}>{k}</span>
             {isNet ? (
@@ -297,19 +297,19 @@ function PayScreen({ onBack, data }) {
                 <span style={{ color: "#9B5FFF", fontSize: 12, fontWeight: 700 }}>Arc Testnet</span>
               </div>
             ) : (
-              <span style={{ color: k === "Taxa de rede" ? "#10B981" : "#C8E0F4", fontSize: 12, fontFamily: k === "Destinatario" ? "monospace" : "inherit", fontWeight: k === "Taxa de rede" ? 700 : 400 }}>{v}</span>
+              <span style={{ color: k === "Network fee" ? "#10B981" : "#C8E0F4", fontSize: 12, fontFamily: k === "Recipient" ? "monospace" : "inherit", fontWeight: k === "Network fee" ? 700 : 400 }}>{v}</span>
             )}
           </div>
         ))}
       </div>
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
-        {status === "polling" ? <Badge color="#3B82F6">Verificando na blockchain...</Badge> : <Badge color="#F59E0B">Aguardando confirmacao</Badge>}
+        {status === "polling" ? <Badge color="#3B82F6">Verifying on blockchain...</Badge> : <Badge color="#F59E0B">Awaiting confirmation</Badge>}
       </div>
       <button onClick={simulatePay} disabled={status === "polling"} style={{ width: "100%", background: status === "polling" ? "rgba(59,130,246,0.2)" : "linear-gradient(135deg, #5500FF, #0099FF 60%, #00C2FF)", border: status === "polling" ? "1px solid rgba(59,130,246,0.3)" : "none", borderRadius: 12, color: "#fff", fontSize: 14, fontWeight: 800, padding: "14px 0", cursor: status === "polling" ? "not-allowed" : "pointer", fontFamily: "inherit", letterSpacing: "0.05em", textTransform: "uppercase", boxShadow: status === "polling" ? "none" : "0 6px 28px rgba(80,0,255,0.45)", transition: "all 0.2s" }}>
-        {status === "polling" ? "Verificando pagamento..." : "Conectar MetaMask e Pagar"}
+        {status === "polling" ? "Verifying payment..." : "Connect MetaMask and Pay"}
       </button>
-      <p style={{ color: "#2A4A60", fontSize: 11, textAlign: "center", marginTop: 10 }}>Sem ETH necessario - Gas pago em USDC - Arc Testnet</p>
-      <button onClick={onBack} style={{ display: "block", margin: "10px auto 0", background: "none", border: "none", color: "#2A4A60", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Voltar</button>
+      <p style={{ color: "#2A4A60", fontSize: 11, textAlign: "center", marginTop: 10 }}>No ETH needed · Gas paid in USDC · Arc Testnet</p>
+      <button onClick={onBack} style={{ display: "block", margin: "10px auto 0", background: "none", border: "none", color: "#2A4A60", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Back</button>
     </div>
   );
 }
@@ -325,14 +325,14 @@ function HowScreen() {
         </div>
       </div>
       <p style={{ color: "#7AAAC8", fontSize: 13, textAlign: "center", marginBottom: 24, lineHeight: 1.7 }}>
-        Pagamentos em USDC na Arc Testnet.<br />Sem ETH. Fees previsiveis em dolar.
+        USDC payments on Arc Testnet.<br />No ETH. Predictable dollar fees.
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {[
-          { n: "01", title: "Crie o pedido",      desc: "Preencha endereco, valor e descricao. O link e gerado instantaneamente." },
-          { n: "02", title: "Compartilhe o link", desc: "Envie para quem vai pagar. Funciona em qualquer dispositivo." },
-          { n: "03", title: "MetaMask conecta",   desc: "A Arc Testnet e adicionada automaticamente a carteira do pagador." },
-          { n: "04", title: "Confirmado onchain", desc: "O app verifica a transacao diretamente na blockchain Arc em tempo real." },
+          { n: "01", title: "Create request",      desc: "Fill in address, amount and description. Link is generated instantly." },
+          { n: "02", title: "Share the link", desc: "Send to whoever will pay. Works on any device." },
+          { n: "03", title: "MetaMask connects",   desc: "Arc Testnet is added automatically to the payer's wallet." },
+          { n: "04", title: "Confirmed onchain", desc: "The app verifies the transaction directly on the Arc blockchain in real time." },
         ].map(({ n, title, desc }) => (
           <div key={n} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
             <div style={{ minWidth: 42, height: 42, borderRadius: 12, background: "rgba(123,47,255,0.12)", border: "1px solid rgba(123,47,255,0.30)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -348,7 +348,7 @@ function HowScreen() {
       <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", background: "rgba(0,144,255,0.09)", border: "1px solid rgba(0,144,255,0.25)", borderRadius: 12 }}>
         <USDCCoin size={32} glow />
         <p style={{ color: "#7AAAC8", fontSize: 12, lineHeight: 1.6 }}>
-          Precisa de USDC de teste?{" "}
+          Need test USDC?{" "}
           <a href="https://faucet.circle.com" target="_blank" rel="noreferrer" style={{ color: "#1A90FF", fontWeight: 700, textDecoration: "none" }}>
             faucet.circle.com
           </a>
@@ -361,7 +361,7 @@ function HowScreen() {
 export default function ArcPay() {
   const [screen, setScreen] = useState("create");
   const [payData, setPayData] = useState(null);
-  const tabs = [{ id: "create", label: "Criar Pedido" }, { id: "how", label: "Como Funciona" }];
+  const tabs = [{ id: "create", label: "Create Request" }, { id: "how", label: "How It Works" }];
 
   return (
     <>
@@ -388,7 +388,7 @@ export default function ArcPay() {
               <ArcMark size={36} />
               <div>
                 <div style={{ color: "#F0F6FF", fontSize: 19, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1 }}>Arc Pay</div>
-                <div style={{ color: "#3A5A70", fontSize: 9.5, fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", marginTop: 3 }}>by Mcidinha - USDC Testnet</div>
+                <div style={{ color: "#3A5A70", fontSize: 9.5, fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", marginTop: 3 }}>by Mcidinha · USDC Testnet</div>
               </div>
             </div>
             <Badge>Testnet</Badge>
@@ -413,7 +413,7 @@ export default function ArcPay() {
         <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 8 }}>
           <ArcMark size={16} />
           <span style={{ color: "#7AAAC8", fontSize: 11, fontWeight: 600, letterSpacing: "0.05em" }}>
-            Arc Testnet &middot; Circle USDC &middot; Built with Claude
+            Arc Testnet · Circle USDC · Built with Claude
           </span>
         </div>
       </div>
