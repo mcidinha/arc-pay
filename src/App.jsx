@@ -84,7 +84,7 @@ function HowScreen() {
   return (
     <div>
       {[
-        { emoji: "🔗", title: "Connect Wallet", desc: "Use MetaMask or Dynamic (email, Google, Apple)." },
+        { emoji: "🔗", title: "Connect Wallet", desc: "Use MetaMask or Dynamic (email, Google and more)." },
         { emoji: "📝", title: "Create Request", desc: "Enter recipient address, amount, and description." },
         { emoji: "🔗", title: "Share Link", desc: "Send the payment link to anyone." },
         { emoji: "💸", title: "Receive USDC", desc: "Get paid instantly on Arc Testnet." },
@@ -143,11 +143,14 @@ function InnerApp() {
   const tabs = [{ id: "create", label: "Create Request" }, { id: "how", label: "How It Works" }];
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #06061a 0%, #0a0a28 50%, #060618 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", position: "relative", overflow: "hidden" }}>
-      <style>{`@keyframes float { 0% { transform: translateY(0px) scale(1); } 50% { transform: translateY(-22px) scale(1.05); } 100% { transform: translateY(0px) scale(1); } } @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.9; } } * { box-sizing: border-box; }`}</style>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #0d0d2b 0%, #1a1040 40%, #0d1535 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", position: "relative", overflow: "hidden" }}>
+      <style>{`@keyframes float { 0% { transform: translateY(0px) scale(1); } 50% { transform: translateY(-24px) scale(1.06); } 100% { transform: translateY(0px) scale(1); } } @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } } * { box-sizing: border-box; }`}</style>
       {bubbles.map(b => (
-        <div key={b.id} style={{ position: "absolute", left: `${b.left}%`, top: `${b.top}%`, width: b.size, height: b.size, borderRadius: "50%", background: "radial-gradient(circle at 35% 35%, rgba(39,117,202,0.35), rgba(39,117,202,0.08))", border: "1.5px solid rgba(39,117,202,0.4)", pointerEvents: "none", animation: `float ${b.duration}s ease-in-out ${b.delay}s infinite, pulse ${b.duration * 1.3}s ease-in-out ${b.delay}s infinite`, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(1px)" }}>
-          <span style={{ fontSize: b.size * 0.35, opacity: 0.7, color: "rgba(39,117,202,0.9)" }}>$</span>
+        <div key={b.id} style={{ position: "absolute", left: `${b.left}%`, top: `${b.top}%`, width: b.size, height: b.size, borderRadius: "50%", background: "radial-gradient(circle at 30% 30%, #2775CA, #1a4fa0)", border: "2px solid rgba(39,117,202,0.6)", boxShadow: "0 0 20px rgba(39,117,202,0.4), inset 0 0 15px rgba(255,255,255,0.1)", pointerEvents: "none", animation: `float ${b.duration}s ease-in-out ${b.delay}s infinite, pulse ${b.duration * 1.2}s ease-in-out ${b.delay}s infinite`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width={b.size * 0.55} height={b.size * 0.55} viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="16" fill="#2775CA"/>
+            <path d="M16 5C9.925 5 5 9.925 5 16S9.925 27 16 27 27 22.075 27 16 22.075 5 16 5zm1.5 17.5v1.25h-3v-1.25C11.675 22.1 9.75 20.05 9.75 17.5h2.5c0 1.65 1.675 3 3.75 3s3.75-1.35 3.75-3c0-1.4-.9-2.15-3.5-2.85-3-.8-5-2.05-5-4.65 0-2.35 1.85-4.3 4.75-4.75V4.25h3V5.2c2.825.45 4.5 2.3 4.5 4.8h-2.5c0-1.65-1.4-2.75-3.25-2.75-1.925 0-3.25 1.025-3.25 2.5 0 1.35.875 2.05 3.5 2.75 3.05.825 5 2.1 5 4.75 0 2.45-1.9 4.45-5 4.95v.25z" fill="white"/>
+          </svg>
         </div>
       ))}
       <div style={{ width: 370, background: "rgba(10,10,30,0.92)", borderRadius: 20, padding: "22px 24px 20px", border: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(18px)", position: "relative", zIndex: 10 }}>
