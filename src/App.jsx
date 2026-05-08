@@ -38,7 +38,7 @@ function WalletScreen({ onConnectMetaMask, onConnectDynamic }) {
         onMouseLeave={e => e.currentTarget.style.background = "rgba(123,95,255,0.15)"}>
         <span style={{ fontSize: 20 }}>🔑</span> Conectar com Dynamic
       </button>
-      <p style={{ color: "#3A5A70", fontSize: 10.5, marginTop: 14 }}>Dynamic aceita e-mail, Google, Apple e outras carteiras</p>
+      <p style={{ color: "#3A5A70", fontSize: 10.5, marginTop: 14 }}>Dynamic aceita e-mail, Google e outras carteiras</p>
     </div>
   );
 }
@@ -189,7 +189,7 @@ function InnerApp() {
 
 export default function App() {
   return (
-    <DynamicContextProvider settings={{ environmentId: DYNAMIC_ENV_ID, walletConnectors: [EthereumWalletConnectors] }}>
+    <DynamicContextProvider settings={{ environmentId: DYNAMIC_ENV_ID, walletConnectors: [EthereumWalletConnectors] }} theme="dark">
       <InnerApp />
     </DynamicContextProvider>
   );
