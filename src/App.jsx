@@ -143,23 +143,38 @@ function InnerApp() {
   const tabs = [{ id: "create", label: "Create Request" }, { id: "how", label: "How It Works" }];
 
   return (
-    <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse at 20% 50%, #1a0533 0%, #0a0a1a 40%, #000510 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", position: "relative", overflow: "hidden" }}>
+    <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse at 50% 50%, #0a1628 0%, #050d1a 50%, #020810 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", position: "relative", overflow: "hidden" }}>
       <style>{`
         @keyframes float { 0% { transform: translateY(0px) scale(1) rotate(0deg); } 50% { transform: translateY(-28px) scale(1.08) rotate(3deg); } 100% { transform: translateY(0px) scale(1) rotate(0deg); } }
         @keyframes pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
-        @keyframes twinkle { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
-        @keyframes nebula { 0%, 100% { opacity: 0.15; transform: scale(1); } 50% { opacity: 0.25; transform: scale(1.05); } }
+        @keyframes twinkle { 0%, 100% { opacity: 0.1; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
+        @keyframes drift { 0% { transform: translateY(0) translateX(0); } 33% { transform: translateY(-15px) translateX(8px); } 66% { transform: translateY(8px) translateX(-5px); } 100% { transform: translateY(0) translateX(0); } }
         * { box-sizing: border-box; }
       `}</style>
 
-      {/* Nebulosa */}
-      <div style={{ position: "absolute", width: "60vw", height: "60vh", left: "50%", top: "50%", transform: "translate(-50%,-50%)", background: "radial-gradient(ellipse, rgba(120,40,200,0.18) 0%, rgba(39,117,202,0.12) 40%, transparent 70%)", borderRadius: "50%", animation: "nebula 8s ease-in-out infinite", pointerEvents: "none" }} />
-      <div style={{ position: "absolute", width: "40vw", height: "40vh", left: "20%", top: "20%", background: "radial-gradient(ellipse, rgba(39,117,202,0.15) 0%, transparent 70%)", borderRadius: "50%", animation: "nebula 10s ease-in-out 2s infinite", pointerEvents: "none" }} />
+      {/* Glow central da galáxia */}
+      <div style={{ position: "absolute", width: "70vw", height: "70vh", left: "50%", top: "50%", transform: "translate(-50%,-50%)", background: "radial-gradient(ellipse, rgba(39,117,202,0.25) 0%, rgba(80,40,180,0.15) 35%, transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
 
-      {/* Estrelas */}
-      {Array.from({ length: 80 }, (_, i) => (
-        <div key={`star-${i}`} style={{ position: "absolute", left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%`, width: Math.random() * 2.5 + 0.5, height: Math.random() * 2.5 + 0.5, borderRadius: "50%", background: "#fff", opacity: Math.random() * 0.7 + 0.2, animation: `twinkle ${2 + Math.random() * 4}s ease-in-out ${Math.random() * 4}s infinite`, pointerEvents: "none" }} />
-      ))}
+      {/* Partículas azuis brilhantes */}
+      {Array.from({ length: 120 }, (_, i) => {
+        const size = Math.random() * 3 + 1;
+        const brightness = Math.random();
+        return (
+          <div key={`p-${i}`} style={{ position: "absolute", left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%`, width: size, height: size, borderRadius: "50%", background: brightness > 0.7 ? "#ffffff" : brightness > 0.4 ? "#7ec8ff" : "#2775CA", boxShadow: brightness > 0.7 ? `0 0 ${size * 3}px #7ec8ff` : brightness > 0.4 ? `0 0 ${size * 2}px #2775CA` : "none", opacity: Math.random() * 0.6 + 0.3, animation: `twinkle ${2 + Math.random() * 5}s ease-in-out ${Math.random() * 5}s infinite`, pointerEvents: "none" }} />
+        );
+      })}
+
+      {/* Nuvem de partículas concentrada (galáxia) */}
+      {Array.from({ length: 60 }, (_, i) => {
+        const angle = Math.random() * 360;
+        const dist = Math.random() * 35 + 5;
+        const x = 50 + dist * Math.cos(angle * Math.PI / 180);
+        const y = 50 + dist * Math.sin(angle * Math.PI / 180) * 0.5;
+        const size = Math.random() * 4 + 1;
+        return (
+          <div key={`g-${i}`} style={{ position: "absolute", left: `${x}%`, top: `${y}%`, width: size, height: size, borderRadius: "50%", background: "#4a9eff", boxShadow: `0 0 ${size * 4}px #2775CA`, opacity: Math.random() * 0.5 + 0.2, animation: `drift ${4 + Math.random() * 6}s ease-in-out ${Math.random() * 4}s infinite`, pointerEvents: "none" }} />
+        );
+      })}
 
       {/* Bolhas USDC */}
       {bubbles.map(b => (
