@@ -143,13 +143,37 @@ function InnerApp() {
   const tabs = [{ id: "create", label: "Create Request" }, { id: "how", label: "How It Works" }];
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #0d0d2b 0%, #1a1040 40%, #0d1535 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", position: "relative", overflow: "hidden" }}>
-      <style>{`@keyframes float { 0% { transform: translateY(0px) scale(1); } 50% { transform: translateY(-24px) scale(1.06); } 100% { transform: translateY(0px) scale(1); } } @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } } * { box-sizing: border-box; }`}</style>
+    <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse at 20% 50%, #1a0533 0%, #0a0a1a 40%, #000510 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", position: "relative", overflow: "hidden" }}>
+      <style>{`
+        @keyframes float { 0% { transform: translateY(0px) scale(1) rotate(0deg); } 50% { transform: translateY(-28px) scale(1.08) rotate(3deg); } 100% { transform: translateY(0px) scale(1) rotate(0deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+        @keyframes twinkle { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+        @keyframes nebula { 0%, 100% { opacity: 0.15; transform: scale(1); } 50% { opacity: 0.25; transform: scale(1.05); } }
+        * { box-sizing: border-box; }
+      `}</style>
+
+      {/* Nebulosa */}
+      <div style={{ position: "absolute", width: "60vw", height: "60vh", left: "50%", top: "50%", transform: "translate(-50%,-50%)", background: "radial-gradient(ellipse, rgba(120,40,200,0.18) 0%, rgba(39,117,202,0.12) 40%, transparent 70%)", borderRadius: "50%", animation: "nebula 8s ease-in-out infinite", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", width: "40vw", height: "40vh", left: "20%", top: "20%", background: "radial-gradient(ellipse, rgba(39,117,202,0.15) 0%, transparent 70%)", borderRadius: "50%", animation: "nebula 10s ease-in-out 2s infinite", pointerEvents: "none" }} />
+
+      {/* Estrelas */}
+      {Array.from({ length: 80 }, (_, i) => (
+        <div key={`star-${i}`} style={{ position: "absolute", left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%`, width: Math.random() * 2.5 + 0.5, height: Math.random() * 2.5 + 0.5, borderRadius: "50%", background: "#fff", opacity: Math.random() * 0.7 + 0.2, animation: `twinkle ${2 + Math.random() * 4}s ease-in-out ${Math.random() * 4}s infinite`, pointerEvents: "none" }} />
+      ))}
+
+      {/* Bolhas USDC */}
       {bubbles.map(b => (
-        <div key={b.id} style={{ position: "absolute", left: `${b.left}%`, top: `${b.top}%`, width: b.size, height: b.size, borderRadius: "50%", background: "radial-gradient(circle at 30% 30%, #2775CA, #1a4fa0)", border: "2px solid rgba(39,117,202,0.6)", boxShadow: "0 0 20px rgba(39,117,202,0.4), inset 0 0 15px rgba(255,255,255,0.1)", pointerEvents: "none", animation: `float ${b.duration}s ease-in-out ${b.delay}s infinite, pulse ${b.duration * 1.2}s ease-in-out ${b.delay}s infinite`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <svg width={b.size * 0.55} height={b.size * 0.55} viewBox="0 0 32 32" fill="none">
-            <circle cx="16" cy="16" r="16" fill="#2775CA"/>
-            <path d="M16 5C9.925 5 5 9.925 5 16S9.925 27 16 27 27 22.075 27 16 22.075 5 16 5zm1.5 17.5v1.25h-3v-1.25C11.675 22.1 9.75 20.05 9.75 17.5h2.5c0 1.65 1.675 3 3.75 3s3.75-1.35 3.75-3c0-1.4-.9-2.15-3.5-2.85-3-.8-5-2.05-5-4.65 0-2.35 1.85-4.3 4.75-4.75V4.25h3V5.2c2.825.45 4.5 2.3 4.5 4.8h-2.5c0-1.65-1.4-2.75-3.25-2.75-1.925 0-3.25 1.025-3.25 2.5 0 1.35.875 2.05 3.5 2.75 3.05.825 5 2.1 5 4.75 0 2.45-1.9 4.45-5 4.95v.25z" fill="white"/>
+        <div key={b.id} style={{ position: "absolute", left: `${b.left}%`, top: `${b.top}%`, width: b.size, height: b.size, borderRadius: "50%", background: "radial-gradient(circle at 30% 25%, #4a9eff, #2775CA 50%, #1a4fa0)", border: "2px solid rgba(100,180,255,0.5)", boxShadow: "0 0 25px rgba(39,117,202,0.6), 0 0 50px rgba(39,117,202,0.2), inset 0 0 20px rgba(255,255,255,0.15)", pointerEvents: "none", animation: `float ${b.duration}s ease-in-out ${b.delay}s infinite, pulse ${b.duration * 1.2}s ease-in-out ${b.delay}s infinite`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width={b.size * 0.58} height={b.size * 0.58} viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="50" fill="url(#usdcGrad)"/>
+            <defs>
+              <radialGradient id="usdcGrad" cx="35%" cy="30%">
+                <stop offset="0%" stopColor="#5aabff"/>
+                <stop offset="100%" stopColor="#1a5fb0"/>
+              </radialGradient>
+            </defs>
+            <path d="M50 18C32.3 18 18 32.3 18 50S32.3 82 50 82 82 67.7 82 50 67.7 18 50 18zM50 76C35.6 76 24 64.4 24 50S35.6 24 50 24 76 35.6 76 50 64.4 76 50 76z" fill="rgba(255,255,255,0.3)"/>
+            <path d="M57 35h-4v-4h-6v4c-5.5 1-9 4.8-9 9.5 0 5.5 3.5 8.5 10 10.2v6.8c-2.8-.5-4.5-2.2-4.5-4.5h-5c0 5 3.8 8.8 9.5 9.5V70h6v-3.5c5.8-.7 9.5-4.5 9.5-9.5 0-5.5-3.2-8.2-10-10v-7c2.5.4 4 2 4 4h5c0-4.8-3.5-8.5-9-9.5V35zm-4 10v7c-3-.8-4.5-2.2-4.5-4 0-1.5 1.5-2.8 4.5-3zm5.5 15.5c0 1.8-1.8 3.2-5.5 3.8v-7.5c3.5.9 5.5 2.2 5.5 3.7z" fill="white"/>
           </svg>
         </div>
       ))}
