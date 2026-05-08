@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { DynamicContextProvider, DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { DynamicContextProvider, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
 
 const DYNAMIC_ENV_ID = "1718fe30-45da-4a62-b094-53734f7f3f8a";
@@ -11,9 +11,9 @@ const ArcMark = ({ size = 20 }) => (
   </svg>
 );
 
-const bubbles = Array.from({ length: 12 }, (_, i) => ({
-  id: i, size: 28 + Math.random() * 36, left: Math.random() * 100,
-  top: Math.random() * 100, delay: Math.random() * 6, duration: 6 + Math.random() * 6,
+const bubbles = Array.from({ length: 14 }, (_, i) => ({
+  id: i, size: 36 + Math.random() * 48, left: Math.random() * 100,
+  top: Math.random() * 100, delay: Math.random() * 4, duration: 5 + Math.random() * 5,
 }));
 
 function WalletScreen({ onConnectMetaMask, onConnectDynamic }) {
@@ -88,6 +88,7 @@ function HowScreen() {
         { emoji: "📝", title: "Create Request", desc: "Enter recipient address, amount, and description." },
         { emoji: "🔗", title: "Share Link", desc: "Send the payment link to anyone." },
         { emoji: "💸", title: "Receive USDC", desc: "Get paid instantly on Arc Testnet." },
+        { emoji: "🚰", title: "Need test USDC?", desc: <span>Get free USDC on <a href="https://faucet.circle.com/" target="_blank" rel="noreferrer" style={{ color: "#00C2FF" }}>faucet.circle.com</a></span> },
       ].map((s, i) => (
         <div key={i} style={{ display: "flex", gap: 14, marginBottom: 16, alignItems: "flex-start" }}>
           <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(80,0,255,0.18)", border: "1px solid rgba(123,47,255,0.40)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>{s.emoji}</div>
@@ -142,10 +143,12 @@ function InnerApp() {
   const tabs = [{ id: "create", label: "Create Request" }, { id: "how", label: "How It Works" }];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#080818", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", position: "relative", overflow: "hidden" }}>
-      <style>{`@keyframes float { from { transform: translateY(0px); } to { transform: translateY(-18px); } } * { box-sizing: border-box; }`}</style>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #06061a 0%, #0a0a28 50%, #060618 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", position: "relative", overflow: "hidden" }}>
+      <style>{`@keyframes float { 0% { transform: translateY(0px) scale(1); } 50% { transform: translateY(-22px) scale(1.05); } 100% { transform: translateY(0px) scale(1); } } @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.9; } } * { box-sizing: border-box; }`}</style>
       {bubbles.map(b => (
-        <div key={b.id} style={{ position: "absolute", left: `${b.left}%`, top: `${b.top}%`, width: b.size, height: b.size, borderRadius: "50%", background: "radial-gradient(circle at 35% 35%, rgba(39,117,202,0.18), rgba(39,117,202,0.04))", border: "1px solid rgba(39,117,202,0.15)", pointerEvents: "none", animation: `float ${b.duration}s ease-in-out ${b.delay}s infinite alternate` }} />
+        <div key={b.id} style={{ position: "absolute", left: `${b.left}%`, top: `${b.top}%`, width: b.size, height: b.size, borderRadius: "50%", background: "radial-gradient(circle at 35% 35%, rgba(39,117,202,0.35), rgba(39,117,202,0.08))", border: "1.5px solid rgba(39,117,202,0.4)", pointerEvents: "none", animation: `float ${b.duration}s ease-in-out ${b.delay}s infinite, pulse ${b.duration * 1.3}s ease-in-out ${b.delay}s infinite`, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(1px)" }}>
+          <span style={{ fontSize: b.size * 0.35, opacity: 0.7, color: "rgba(39,117,202,0.9)" }}>$</span>
+        </div>
       ))}
       <div style={{ width: 370, background: "rgba(10,10,30,0.92)", borderRadius: 20, padding: "22px 24px 20px", border: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(18px)", position: "relative", zIndex: 10 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
