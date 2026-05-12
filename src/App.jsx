@@ -487,10 +487,12 @@ function PayScreen() {
             </div>
           </div>
 
-          {/* Endereco da carteira */}
+          {/* Endereco da carteira - clicavel para copiar */}
           {address && (
-            <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "10px 14px", marginBottom: "12px", fontSize: "11px", color: "rgba(255,255,255,0.35)", fontFamily: "monospace" }}>
-              {address.slice(0, 10)}...{address.slice(-8)}
+            <div onClick={() => { navigator.clipboard.writeText(address); handleFaucet(); }}
+              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "10px 14px", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+              <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", fontFamily: "monospace", flex: 1 }}>{address.slice(0, 10)}...{address.slice(-8)}</span>
+              <span style={{ fontSize: "11px", color: faucetCopied ? "#4ade80" : "#63b3ff" }}>{faucetCopied ? "copied!" : "copy"}</span>
             </div>
           )}
 
