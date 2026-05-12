@@ -3,7 +3,7 @@ import { DynamicContextProvider, useDynamicContext } from "@dynamic-labs/sdk-rea
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
 
 const DYNAMIC_ENV_ID = "1718fe30-45da-4a62-b094-53734f7f3f8a";
-const BACKEND_URL = "";
+const BACKEND_URL = "/api";
 const stars = Array.from({ length: 60 }, (_, i) => ({
   id: i,
   size: Math.random() < 0.3 ? 2 : 1,
