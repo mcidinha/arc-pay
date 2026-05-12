@@ -4,6 +4,7 @@ import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
 
 const DYNAMIC_ENV_ID = "1718fe30-45da-4a62-b094-53734f7f3f8a";
 const BACKEND_URL = "/api";
+
 const stars = Array.from({ length: 60 }, (_, i) => ({
   id: i,
   size: Math.random() < 0.3 ? 2 : 1,
@@ -146,10 +147,10 @@ function LoginScreen() {
       </div>
       <div style={{ marginBottom: "36px" }}>
         <h1 style={{ fontSize: "34px", fontWeight: "800", lineHeight: "1.15", marginBottom: "14px", background: "linear-gradient(135deg, #fff 40%, #93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-          Pagamentos USDC na Arc Testnet
+          USDC Payments on Arc Testnet
         </h1>
         <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.45)", lineHeight: "1.7" }}>
-          Envie e receba USDC instantaneamente. Entre com Google, e-mail ou qualquer carteira.
+          Send and receive USDC instantly. Sign in with Google, email or any wallet.
         </p>
       </div>
       <button style={primaryBtn} onClick={() => setShowAuthFlow(true)}>
@@ -165,20 +166,31 @@ function LoginScreen() {
       <div style={footer}><ArcMark size={12} />Arc Testnet · Circle USDC · Built with Claude by mcidinha</div>
     </div>
   );
-}function Dashboard({ onSend, onLink, onHow, walletData, loadingWallet }) {
+}
+
+function Dashboard({ onSend, onLink, onHow, walletData, loadingWallet }) {
   const { user, primaryWallet, handleLogOut } = useDynamicContext();
   const address = walletData?.address || primaryWallet?.address || "";
-  const shortAddress = address ? address.slice(0, 8) + "..." + address.slice(-6) : "Criando carteira...";
+  const shortAddress = address ? address.slice(0, 8) + "..." + address.slice(-6) : "Creating wallet...";
   const userEmail = user?.email || "";
   const balance = walletData?.balance || "0";
   const [faucetCopied, setFaucetCopied] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const copyAddress = () => {
-    if (address) { navigator.clipboard.writeText(address); setCopied(true); setTimeout(() => setCopied(false), 2000); }
+    if (address) {
+      navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
+
   const handleFaucet = () => {
-    if (address) { navigator.clipboard.writeText(address); setFaucetCopied(true); setTimeout(() => setFaucetCopied(false), 3000); }
+    if (address) {
+      navigator.clipboard.writeText(address);
+      setFaucetCopied(true);
+      setTimeout(() => setFaucetCopied(false), 3000);
+    }
   };
 
   return (
@@ -201,11 +213,12 @@ function LoginScreen() {
           <span style={pulseDot} />{userEmail}
         </div>
       )}
+
       <div style={{ background: "linear-gradient(135deg, rgba(13,26,70,0.9) 0%, rgba(4,12,40,0.95) 100%)", border: "1px solid rgba(74,124,247,0.25)", borderRadius: "20px", padding: "26px", marginBottom: "14px", textAlign: "center", position: "relative", overflow: "hidden", boxShadow: "0 0 40px rgba(74,124,247,0.1)" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "radial-gradient(ellipse at 50% -20%, rgba(74,124,247,0.2) 0%, transparent 65%)", borderRadius: "20px", pointerEvents: "none" }} />
         <div style={{ fontSize: "10px", color: "rgba(99,179,255,0.65)", fontWeight: "700", letterSpacing: "0.18em", marginBottom: "8px", textTransform: "uppercase" }}>Arc Testnet Balance</div>
         {loadingWallet ? (
-          <div style={{ fontSize: "16px", color: "rgba(255,255,255,0.4)", padding: "10px" }}>Carregando...</div>
+          <div style={{ fontSize: "16px", color: "rgba(255,255,255,0.4)", padding: "10px" }}>Loading...</div>
         ) : (
           <>
             <div style={{ fontSize: "56px", fontWeight: "900", lineHeight: 1, background: "linear-gradient(135deg, #ffffff 0%, #c7deff 40%, #63b3ff 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{parseFloat(balance).toFixed(2)}</div>
@@ -216,10 +229,12 @@ function LoginScreen() {
           </>
         )}
       </div>
+
       <div onClick={copyAddress} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "11px 16px", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
         <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", fontFamily: "monospace", flex: 1 }}>{shortAddress}</span>
-        <span style={{ fontSize: "11px", color: copied ? "#4ade80" : "#63b3ff" }}>{copied ? "copiado!" : "copiar"}</span>
+        <span style={{ fontSize: "11px", color: copied ? "#4ade80" : "#63b3ff" }}>{copied ? "copied!" : "copy"}</span>
       </div>
+
       <a href="https://faucet.circle.com" target="_blank" rel="noreferrer" onClick={handleFaucet}
         style={{ display: "block", textAlign: "center", marginBottom: "12px", padding: "12px",
           background: faucetCopied ? "rgba(34,197,94,0.1)" : "rgba(34,197,94,0.06)",
@@ -229,6 +244,7 @@ function LoginScreen() {
           textDecoration: "none", fontWeight: "600" }}>
         {faucetCopied ? "✓ Address copied! Paste in faucet" : "✦ Get free USDC on Circle Faucet"}
       </a>
+
       <button onClick={onSend} style={primaryBtn}>Send USDC</button>
       <button onClick={onLink} style={secondaryBtn}>Generate Payment Link</button>
       <div style={footer}><ArcMark size={11} />Arc Testnet · Circle USDC · Built with Claude by mcidinha</div>
@@ -247,8 +263,8 @@ function SendScreen({ onBack, walletData }) {
   const fromWalletId = walletData?.circle_wallet_id || "";
 
   const handleSend = async () => {
-    if (!toAddress || !amount) { setStatus("error:Preencha o endereco e o valor."); return; }
-    if (!fromWalletId) { setStatus("error:Carteira nao encontrada."); return; }
+    if (!toAddress || !amount) { setStatus("error:Please fill in the address and amount."); return; }
+    if (!fromWalletId) { setStatus("error:Wallet not found."); return; }
     setLoading(true); setStatus("");
     try {
       const res = await fetch(BACKEND_URL + "/payment/send", {
@@ -266,29 +282,29 @@ function SendScreen({ onBack, walletData }) {
     <div style={card}>
       <button style={backBtn} onClick={onBack}>← Back</button>
       <h2 style={{ fontSize: "26px", fontWeight: "800", marginBottom: "6px", background: "linear-gradient(135deg, #fff, #93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Enviar USDC</h2>
-      <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", marginBottom: "28px" }}>Transferencia instantanea na Arc Testnet</p>
+      <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", marginBottom: "28px" }}>Instant transfer on Arc Testnet</p>
       {fromWalletId && (
         <div style={{ background: "rgba(74,124,247,0.06)", border: "1px solid rgba(74,124,247,0.15)", borderRadius: "10px", padding: "10px 14px", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>
           Carteira: {fromWalletId.slice(0, 16)}...
         </div>
       )}
-      <label style={labelStyle}>Endereco destino</label>
+      <label style={labelStyle}>Destination address</label>
       <input style={inputStyle} placeholder="0x..." value={toAddress} onChange={e => setToAddress(e.target.value)} />
-      <label style={labelStyle}>Valor (USDC)</label>
+      <label style={labelStyle}>Amount (USDC)</label>
       <input style={inputStyle} placeholder="Ex: 1.00" type="number" value={amount} onChange={e => setAmount(e.target.value)} />
       {!hasEmail && (
         <>
-          <label style={labelStyle}>E-mail para comprovante</label>
-          <input style={inputStyle} placeholder="seu@email.com" type="email" value={email} onChange={e => setEmail(e.target.value)} />
+          <label style={labelStyle}>Email for receipt</label>
+          <input style={inputStyle} placeholder="your@email.com" type="email" value={email} onChange={e => setEmail(e.target.value)} />
         </>
       )}
       {hasEmail && (
         <div style={{ background: "rgba(74,124,247,0.08)", border: "1px solid rgba(74,124,247,0.2)", borderRadius: "10px", padding: "12px 14px", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.5)" }}>
-          <span style={pulseDot} />Comprovante para {user.email}
+          <span style={pulseDot} />Receipt for {user.email}
         </div>
       )}
       <button style={primaryBtn} onClick={handleSend} disabled={loading}>
-        {loading ? "Enviando..." : "Enviar USDC"}
+        {loading ? "Sending..." : "Enviar USDC"}
       </button>
       {status === "success" && (
         <div style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "14px", padding: "20px", textAlign: "center", marginTop: "8px" }}>
@@ -318,7 +334,7 @@ function LinkScreen({ onBack, walletData }) {
   const baseUrl = window.location.origin;
 
   const generateLink = () => {
-    if (!address) { alert("Carteira nao encontrada!"); return; }
+    if (!address) { alert("Wallet not found!"); return; }
     const params = new URLSearchParams({ to: address });
     if (amount) params.set("amount", amount);
     if (description) params.set("desc", description);
@@ -335,22 +351,22 @@ function LinkScreen({ onBack, walletData }) {
   return (
     <div style={card}>
       <button style={backBtn} onClick={onBack}>← Back</button>
-      <h2 style={{ fontSize: "26px", fontWeight: "800", marginBottom: "6px", background: "linear-gradient(135deg, #fff, #93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Link de Pagamento</h2>
-      <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", marginBottom: "28px" }}>Gere um link para receber USDC de qualquer pessoa</p>
-      <label style={labelStyle}>Valor (opcional)</label>
+      <h2 style={{ fontSize: "26px", fontWeight: "800", marginBottom: "6px", background: "linear-gradient(135deg, #fff, #93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Payment Link</h2>
+      <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", marginBottom: "28px" }}>Generate a link to receive USDC from anyone</p>
+      <label style={labelStyle}>Amount (optional)</label>
       <input style={inputStyle} placeholder="Ex: 10 USDC" type="number" value={amount} onChange={e => setAmount(e.target.value)} />
-      <label style={labelStyle}>Descricao (opcional)</label>
-      <input style={inputStyle} placeholder="Ex: Pagamento do servico X" value={description} onChange={e => setDescription(e.target.value)} />
+      <label style={labelStyle}>Description (optional)</label>
+      <input style={inputStyle} placeholder="Ex: Service payment" value={description} onChange={e => setDescription(e.target.value)} />
       <div style={{ background: "rgba(74,124,247,0.05)", border: "1px solid rgba(74,124,247,0.12)", borderRadius: "12px", padding: "12px 16px", marginBottom: "12px", fontSize: "12px", color: "rgba(255,255,255,0.35)", fontFamily: "monospace" }}>
         {address ? address.slice(0, 10) + "..." + address.slice(-8) : "Carregando carteira..."}
       </div>
-      <label style={labelStyle}>E-mail de quem vai receber comprovante (opcional)</label>
-      <input style={inputStyle} placeholder="email@destinatario.com" type="email" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} />
-      <button style={primaryBtn} onClick={generateLink}>Gerar Link</button>
+      <label style={labelStyle}>Recipient email for receipt (optional)</label>
+      <input style={inputStyle} placeholder="email@recipient.com" type="email" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} />
+      <button style={primaryBtn} onClick={generateLink}>Generate Link</button>
       {link && (
         <div style={{ marginTop: "8px" }}>
           <div style={{ background: "rgba(74,124,247,0.08)", border: "1px solid rgba(74,124,247,0.2)", borderRadius: "12px", padding: "16px", marginBottom: "12px" }}>
-            <div style={{ fontSize: "11px", color: "rgba(99,179,255,0.5)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Seu link de pagamento</div>
+            <div style={{ fontSize: "11px", color: "rgba(99,179,255,0.5)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Your payment link</div>
             <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", wordBreak: "break-all", fontFamily: "monospace", lineHeight: "1.5" }}>{link}</div>
           </div>
           <button onClick={copyLink} style={{ ...secondaryBtn, marginBottom: 0, background: copied ? "rgba(34,197,94,0.1)" : "rgba(255,255,255,0.04)", border: copied ? "1px solid rgba(34,197,94,0.3)" : "1px solid rgba(255,255,255,0.1)", color: copied ? "#4ade80" : "#fff" }}>
@@ -360,7 +376,9 @@ function LinkScreen({ onBack, walletData }) {
       )}
     </div>
   );
-}function PayScreen() {
+}
+
+function PayScreen() {
   const params = new URLSearchParams(window.location.search);
   const toAddress = params.get("to") || "";
   const amount = params.get("amount") || "";
@@ -389,7 +407,7 @@ function LinkScreen({ onBack, walletData }) {
   }, [loggedIn]);
 
   const handlePay = async () => {
-    if (!walletData?.circle_wallet_id) { setStatus("error:Carteira nao encontrada."); return; }
+    if (!walletData?.circle_wallet_id) { setStatus("error:Wallet not found."); return; }
     setLoading(true); setStatus("");
     try {
       const res = await fetch(BACKEND_URL + "/payment/send", {
@@ -411,9 +429,10 @@ function LinkScreen({ onBack, walletData }) {
         </div>
         <span style={{ fontSize: "20px", fontWeight: "800", background: "linear-gradient(135deg, #fff, #93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Arc Pay</span>
       </div>
+
       <div style={{ background: "linear-gradient(135deg, rgba(13,26,70,0.9), rgba(4,12,40,0.95))", border: "1px solid rgba(74,124,247,0.25)", borderRadius: "20px", padding: "28px", marginBottom: "20px", textAlign: "center", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "radial-gradient(ellipse at 50% -20%, rgba(74,124,247,0.2) 0%, transparent 65%)", borderRadius: "20px" }} />
-        <div style={{ fontSize: "10px", color: "rgba(99,179,255,0.65)", fontWeight: "700", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "10px" }}>Valor a Pagar</div>
+        <div style={{ fontSize: "10px", color: "rgba(99,179,255,0.65)", fontWeight: "700", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "10px" }}>Amount to Pay</div>
         <div style={{ fontSize: "56px", fontWeight: "900", lineHeight: 1, background: "linear-gradient(135deg, #ffffff 0%, #c7deff 40%, #63b3ff 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{amount || "?"}</div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginTop: "10px" }}>
           <div style={{ width: "22px", height: "22px", borderRadius: "50%", background: "linear-gradient(135deg, #2775CA, #1557a0)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "800", color: "white", border: "1.5px solid rgba(99,179,255,0.4)" }}>$</div>
@@ -421,13 +440,15 @@ function LinkScreen({ onBack, walletData }) {
         </div>
         {desc && <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", marginTop: "10px" }}>{desc}</div>}
       </div>
+
       <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "12px 16px", marginBottom: "20px", fontSize: "11px", color: "rgba(255,255,255,0.35)", fontFamily: "monospace", wordBreak: "break-all" }}>
-        Para: {toAddress}
+        To: {toAddress}
       </div>
+
       {!loggedIn ? (
         <>
           <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)", marginBottom: "16px", textAlign: "center" }}>
-            Entre para realizar o pagamento
+            Sign in to complete payment
           </p>
           <button style={primaryBtn} onClick={() => setShowAuthFlow(true)}>
             Get Started
@@ -437,25 +458,26 @@ function LinkScreen({ onBack, walletData }) {
         <>
           {!hasEmail && (
             <>
-              <label style={labelStyle}>E-mail para comprovante</label>
-              <input style={inputStyle} placeholder="seu@email.com" type="email" value={email} onChange={e => setEmail(e.target.value)} />
+              <label style={labelStyle}>Email for receipt</label>
+              <input style={inputStyle} placeholder="your@email.com" type="email" value={email} onChange={e => setEmail(e.target.value)} />
             </>
           )}
           {hasEmail && (
             <div style={{ background: "rgba(74,124,247,0.08)", border: "1px solid rgba(74,124,247,0.2)", borderRadius: "10px", padding: "12px 14px", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.5)" }}>
-              <span style={pulseDot} />Comprovante para {user.email}
+              <span style={pulseDot} />Receipt for {user.email}
             </div>
           )}
           {recipientEmail && (
             <div style={{ background: "rgba(74,124,247,0.05)", border: "1px solid rgba(74,124,247,0.12)", borderRadius: "10px", padding: "10px 14px", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>
-              E-mail de quem vai receber: {recipientEmail}
+              Recipient email: {recipientEmail}
             </div>
           )}
           <button style={primaryBtn} onClick={handlePay} disabled={loading}>
-            {loading ? "Processando..." : "Pagar " + (amount || "?") + " USDC"}
+            {loading ? "Processing..." : "Pay " + (amount || "?") + " USDC"}
           </button>
         </>
       )}
+
       {status === "success" && (
         <div style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "14px", padding: "20px", textAlign: "center", marginTop: "8px" }}>
           <div style={{ fontWeight: "700", marginBottom: "4px", color: "#4ade80" }}>✓ Payment confirmed!</div>
