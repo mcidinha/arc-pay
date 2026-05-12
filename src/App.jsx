@@ -281,11 +281,11 @@ function SendScreen({ onBack, walletData }) {
   return (
     <div style={card}>
       <button style={backBtn} onClick={onBack}>← Back</button>
-      <h2 style={{ fontSize: "26px", fontWeight: "800", marginBottom: "6px", background: "linear-gradient(135deg, #fff, #93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Enviar USDC</h2>
+      <h2 style={{ fontSize: "26px", fontWeight: "800", marginBottom: "6px", background: "linear-gradient(135deg, #fff, #93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Send USDC</h2>
       <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", marginBottom: "28px" }}>Instant transfer on Arc Testnet</p>
       {fromWalletId && (
         <div style={{ background: "rgba(74,124,247,0.06)", border: "1px solid rgba(74,124,247,0.15)", borderRadius: "10px", padding: "10px 14px", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>
-          Carteira: {fromWalletId.slice(0, 16)}...
+          Wallet: {fromWalletId.slice(0, 16)}...
         </div>
       )}
       <label style={labelStyle}>Destination address</label>
@@ -304,13 +304,13 @@ function SendScreen({ onBack, walletData }) {
         </div>
       )}
       <button style={primaryBtn} onClick={handleSend} disabled={loading}>
-        {loading ? "Sending..." : "Enviar USDC"}
+        {loading ? "Sending..." : "Send USDC"}
       </button>
       {status === "success" && (
         <div style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "14px", padding: "20px", textAlign: "center", marginTop: "8px" }}>
           <div style={{ fontWeight: "700", marginBottom: "4px", color: "#4ade80" }}>✓ Payment sent!</div>
           <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>
-            {email ? "Comprovante enviado para " + email : "Transacao iniciada na Arc Testnet"}
+            {email ? "Receipt sent to " + email : "Transaction initiated on Arc Testnet"}
           </div>
         </div>
       )}
@@ -358,7 +358,7 @@ function LinkScreen({ onBack, walletData }) {
       <label style={labelStyle}>Description (optional)</label>
       <input style={inputStyle} placeholder="Ex: Service payment" value={description} onChange={e => setDescription(e.target.value)} />
       <div style={{ background: "rgba(74,124,247,0.05)", border: "1px solid rgba(74,124,247,0.12)", borderRadius: "12px", padding: "12px 16px", marginBottom: "12px", fontSize: "12px", color: "rgba(255,255,255,0.35)", fontFamily: "monospace" }}>
-        {address ? address.slice(0, 10) + "..." + address.slice(-8) : "Carregando carteira..."}
+        {address ? address.slice(0, 10) + "..." + address.slice(-8) : "Loading wallet..."}
       </div>
       <label style={labelStyle}>Recipient email for receipt (optional)</label>
       <input style={inputStyle} placeholder="email@recipient.com" type="email" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} />
@@ -387,24 +387,39 @@ function PayScreen() {
   const { isAuthenticated, user, primaryWallet } = useDynamicContext();
   const { setShowAuthFlow } = useDynamicContext();
   const [walletData, setWalletData] = useState(null);
+  const [loadingWallet, setLoadingWallet] = useState(false);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState(user?.email || "");
+  const [faucetCopied, setFaucetCopied] = useState(false);
   const loggedIn = isAuthenticated || !!user || !!primaryWallet;
   const hasEmail = !!user?.email;
+  const balance = walletData?.balance || "0";
+  const address = walletData?.address || "";
+  const hasEnoughBalance = parseFloat(balance) >= parseFloat(amount || "0");
 
   useEffect(() => {
     if (!loggedIn) return;
     const userId = user?.userId || user?.id || primaryWallet?.address || "guest";
     const userEmail = user?.email || "";
+    setLoadingWallet(true);
     fetch(BACKEND_URL + "/wallet/get-or-create", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, email: userEmail }),
     })
       .then(r => r.json())
       .then(data => { if (data.success) setWalletData({ ...data.wallet, balance: data.balance }); })
-      .catch(e => console.error("Erro:", e));
+      .catch(e => console.error("Erro:", e))
+      .finally(() => setLoadingWallet(false));
   }, [loggedIn]);
+
+  const handleFaucet = () => {
+    if (address) {
+      navigator.clipboard.writeText(address);
+      setFaucetCopied(true);
+      setTimeout(() => setFaucetCopied(false), 3000);
+    }
+  };
 
   const handlePay = async () => {
     if (!walletData?.circle_wallet_id) { setStatus("error:Wallet not found."); return; }
@@ -430,7 +445,8 @@ function PayScreen() {
         <span style={{ fontSize: "20px", fontWeight: "800", background: "linear-gradient(135deg, #fff, #93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Arc Pay</span>
       </div>
 
-      <div style={{ background: "linear-gradient(135deg, rgba(13,26,70,0.9), rgba(4,12,40,0.95))", border: "1px solid rgba(74,124,247,0.25)", borderRadius: "20px", padding: "28px", marginBottom: "20px", textAlign: "center", position: "relative", overflow: "hidden" }}>
+      {/* Valor a pagar */}
+      <div style={{ background: "linear-gradient(135deg, rgba(13,26,70,0.9), rgba(4,12,40,0.95))", border: "1px solid rgba(74,124,247,0.25)", borderRadius: "20px", padding: "28px", marginBottom: "16px", textAlign: "center", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "radial-gradient(ellipse at 50% -20%, rgba(74,124,247,0.2) 0%, transparent 65%)", borderRadius: "20px" }} />
         <div style={{ fontSize: "10px", color: "rgba(99,179,255,0.65)", fontWeight: "700", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "10px" }}>Amount to Pay</div>
         <div style={{ fontSize: "56px", fontWeight: "900", lineHeight: 1, background: "linear-gradient(135deg, #ffffff 0%, #c7deff 40%, #63b3ff 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{amount || "?"}</div>
@@ -441,7 +457,7 @@ function PayScreen() {
         {desc && <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", marginTop: "10px" }}>{desc}</div>}
       </div>
 
-      <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "12px 16px", marginBottom: "20px", fontSize: "11px", color: "rgba(255,255,255,0.35)", fontFamily: "monospace", wordBreak: "break-all" }}>
+      <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "12px 16px", marginBottom: "16px", fontSize: "11px", color: "rgba(255,255,255,0.35)", fontFamily: "monospace", wordBreak: "break-all" }}>
         To: {toAddress}
       </div>
 
@@ -454,25 +470,65 @@ function PayScreen() {
             Get Started
           </button>
         </>
+      ) : loadingWallet ? (
+        <div style={{ textAlign: "center", padding: "20px", color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>
+          Creating your wallet...
+        </div>
       ) : (
         <>
+          {/* Saldo da carteira */}
+          <div style={{ background: "linear-gradient(135deg, rgba(13,26,70,0.9) 0%, rgba(4,12,40,0.95) 100%)", border: "1px solid rgba(74,124,247,0.25)", borderRadius: "16px", padding: "18px", marginBottom: "12px", textAlign: "center", position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "radial-gradient(ellipse at 50% -20%, rgba(74,124,247,0.15) 0%, transparent 65%)", borderRadius: "16px" }} />
+            <div style={{ fontSize: "10px", color: "rgba(99,179,255,0.65)", fontWeight: "700", letterSpacing: "0.18em", marginBottom: "6px", textTransform: "uppercase" }}>Your Balance</div>
+            <div style={{ fontSize: "36px", fontWeight: "900", lineHeight: 1, background: "linear-gradient(135deg, #ffffff 0%, #c7deff 40%, #63b3ff 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{parseFloat(balance).toFixed(2)}</div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", marginTop: "6px" }}>
+              <div style={{ width: "18px", height: "18px", borderRadius: "50%", background: "linear-gradient(135deg, #2775CA, #1557a0)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: "800", color: "white" }}>$</div>
+              <span style={{ color: "#93c5fd", fontSize: "12px", fontWeight: "600", letterSpacing: "0.1em" }}>USDC</span>
+            </div>
+          </div>
+
+          {/* Endereco da carteira */}
+          {address && (
+            <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "10px 14px", marginBottom: "12px", fontSize: "11px", color: "rgba(255,255,255,0.35)", fontFamily: "monospace" }}>
+              {address.slice(0, 10)}...{address.slice(-8)}
+            </div>
+          )}
+
+          {/* Faucet */}
+          <a href="https://faucet.circle.com" target="_blank" rel="noreferrer" onClick={handleFaucet}
+            style={{ display: "block", textAlign: "center", marginBottom: "16px", padding: "12px",
+              background: faucetCopied ? "rgba(34,197,94,0.1)" : "rgba(34,197,94,0.06)",
+              border: faucetCopied ? "1px solid rgba(34,197,94,0.35)" : "1px solid rgba(34,197,94,0.18)",
+              borderRadius: "12px", fontSize: "12px",
+              color: faucetCopied ? "#4ade80" : "rgba(74,222,128,0.8)",
+              textDecoration: "none", fontWeight: "600" }}>
+            {faucetCopied ? "✓ Address copied! Paste in faucet" : "✦ Get free USDC on Circle Faucet"}
+          </a>
+
+          {/* Aviso de saldo insuficiente */}
+          {!hasEnoughBalance && (
+            <div style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "12px", padding: "12px 16px", marginBottom: "12px", fontSize: "12px", color: "#fbbf24", textAlign: "center" }}>
+              ⚠ Insufficient balance. Get free USDC from the faucet above, then refresh the page.
+            </div>
+          )}
+
+          {hasEmail && (
+            <div style={{ background: "rgba(74,124,247,0.08)", border: "1px solid rgba(74,124,247,0.2)", borderRadius: "10px", padding: "12px 14px", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.5)" }}>
+              <span style={pulseDot} />Receipt for {user.email}
+            </div>
+          )}
           {!hasEmail && (
             <>
               <label style={labelStyle}>Email for receipt</label>
               <input style={inputStyle} placeholder="your@email.com" type="email" value={email} onChange={e => setEmail(e.target.value)} />
             </>
           )}
-          {hasEmail && (
-            <div style={{ background: "rgba(74,124,247,0.08)", border: "1px solid rgba(74,124,247,0.2)", borderRadius: "10px", padding: "12px 14px", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.5)" }}>
-              <span style={pulseDot} />Receipt for {user.email}
-            </div>
-          )}
           {recipientEmail && (
             <div style={{ background: "rgba(74,124,247,0.05)", border: "1px solid rgba(74,124,247,0.12)", borderRadius: "10px", padding: "10px 14px", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>
               Recipient email: {recipientEmail}
             </div>
           )}
-          <button style={primaryBtn} onClick={handlePay} disabled={loading}>
+          <button style={{ ...primaryBtn, opacity: hasEnoughBalance ? 1 : 0.4, cursor: hasEnoughBalance ? "pointer" : "not-allowed" }} onClick={handlePay} disabled={loading || !hasEnoughBalance}>
             {loading ? "Processing..." : "Pay " + (amount || "?") + " USDC"}
           </button>
         </>
