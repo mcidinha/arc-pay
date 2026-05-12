@@ -32,28 +32,51 @@ module.exports = async (req, res) => {
   try {
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
     const { userId, email } = req.body;
+    console.log("RECEBIDO:", { userId, email });
 
+    // Buscar usuario pelo email primeiro (igual ao original)
     let resolvedUserId = userId;
     if (email) {
-      const { data: existingUser } = await supabase
-        .from('wallets').select('user_id').eq('email', email).single();
-      if (existingUser) resolvedUserId = existingUser.user_id;
+      const { data: userByEmail } = await supabase
+        .from('users').select('id').eq('email', email).single();
+      if (userByEmail) {
+        resolvedUserId = userByEmail.id;
+      }
     }
 
-    const { data: existingWallet } = await supabase
-      .from('wallets').select('*').eq('user_id', resolvedUserId).single();
+    // Verificar se usuario existe, se não cria
+    const { data: userRecord } = await supabase
+      .from('users').select('id').eq('id', resolvedUserId).single();
 
-    if (existingWallet) {
-      const balanceRes = await axios.get(
-        `${CIRCLE_BASE_URL}/w3s/wallets/${existingWallet.circle_wallet_id}/balances`,
-        { headers: circleHeaders }
-      );
-      const balances = balanceRes.data.data.tokenBalances || [];
-      const usdc = balances.find(b => b.token?.symbol === 'USDC');
-      const balance = usdc ? usdc.amount : '0';
-      return res.json({ success: true, wallet: existingWallet, balance });
+    if (!userRecord) {
+      await supabase.from('users').insert({ id: resolvedUserId, email: email || null });
     }
 
+    // Buscar carteira pelo user_id + blockchain (igual ao original)
+    const { data: walletRecord } = await supabase
+      .from('wallets').select('*')
+      .eq('user_id', resolvedUserId)
+      .eq('blockchain', 'ARC-TESTNET')
+      .single();
+
+    if (walletRecord) {
+      let balance = '0';
+      try {
+        const balanceRes = await axios.get(
+          `${CIRCLE_BASE_URL}/wallets/${walletRecord.circle_wallet_id}/balances`,
+          { headers: circleHeaders }
+        );
+        const tokenBalances = balanceRes.data.data.tokenBalances;
+        if (tokenBalances && tokenBalances.length > 0) {
+          balance = tokenBalances[0].amount;
+        }
+      } catch (e) {
+        console.error('Erro ao buscar saldo:', e.message);
+      }
+      return res.json({ success: true, wallet: walletRecord, balance });
+    }
+
+    // Criar nova carteira
     const entitySecretCiphertext = await getEntitySecretCiphertext();
     const walletRes = await axios.post(
       `${CIRCLE_BASE_URL}/w3s/developer/wallets`,
@@ -69,13 +92,16 @@ module.exports = async (req, res) => {
     const wallet = walletRes.data.data.wallets[0];
     await supabase.from('wallets').insert({
       user_id: resolvedUserId,
-      email: email || null,
       circle_wallet_id: wallet.id,
       blockchain: wallet.blockchain,
       address: wallet.address,
     });
 
-    return res.json({ success: true, wallet: { circle_wallet_id: wallet.id, address: wallet.address, blockchain: wallet.blockchain }, balance: '0' });
+    return res.json({
+      success: true,
+      wallet: { circle_wallet_id: wallet.id, address: wallet.address, blockchain: wallet.blockchain },
+      balance: '0'
+    });
   } catch (error) {
     console.error(error.response?.data || error.message);
     return res.status(500).json({ error: error.response?.data || error.message });
