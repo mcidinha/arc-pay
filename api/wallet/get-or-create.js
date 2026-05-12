@@ -3,7 +3,6 @@ const axios = require('axios');
 const crypto = require('crypto');
 
 const CIRCLE_BASE_URL = 'https://api.circle.com/v1';
-
 const circleHeaders = {
   'Authorization': `Bearer ${process.env.CIRCLE_API_KEY}`,
   'Content-Type': 'application/json',
@@ -34,25 +33,19 @@ module.exports = async (req, res) => {
     const { userId, email } = req.body;
     console.log("RECEBIDO:", { userId, email });
 
-    // Buscar usuario pelo email primeiro (igual ao original)
     let resolvedUserId = userId;
     if (email) {
       const { data: userByEmail } = await supabase
         .from('users').select('id').eq('email', email).single();
-      if (userByEmail) {
-        resolvedUserId = userByEmail.id;
-      }
+      if (userByEmail) resolvedUserId = userByEmail.id;
     }
 
-    // Verificar se usuario existe, se não cria
     const { data: userRecord } = await supabase
       .from('users').select('id').eq('id', resolvedUserId).single();
-
     if (!userRecord) {
       await supabase.from('users').insert({ id: resolvedUserId, email: email || null });
     }
 
-    // Buscar carteira pelo user_id + blockchain (igual ao original)
     const { data: walletRecord } = await supabase
       .from('wallets').select('*')
       .eq('user_id', resolvedUserId)
@@ -67,23 +60,21 @@ module.exports = async (req, res) => {
           { headers: circleHeaders }
         );
         const tokenBalances = balanceRes.data.data.tokenBalances;
-        if (tokenBalances && tokenBalances.length > 0) {
-          balance = tokenBalances[0].amount;
-        }
+        if (tokenBalances && tokenBalances.length > 0) balance = tokenBalances[0].amount;
       } catch (e) {
         console.error('Erro ao buscar saldo:', e.message);
       }
       return res.json({ success: true, wallet: walletRecord, balance });
     }
 
-    // Criar nova carteira
+    // Criar nova carteira — sem walletSetId, Circle cria automaticamente
     const entitySecretCiphertext = await getEntitySecretCiphertext();
     const walletRes = await axios.post(
       `${CIRCLE_BASE_URL}/w3s/developer/wallets`,
       {
         idempotencyKey: crypto.randomUUID(),
         entitySecretCiphertext,
-        blockchain: 'ARC-TESTNET',
+        blockchains: ['ARC-TESTNET'],
         count: 1,
       },
       { headers: circleHeaders }
@@ -102,6 +93,7 @@ module.exports = async (req, res) => {
       wallet: { circle_wallet_id: wallet.id, address: wallet.address, blockchain: wallet.blockchain },
       balance: '0'
     });
+
   } catch (error) {
     console.error(error.response?.data || error.message);
     return res.status(500).json({ error: error.response?.data || error.message });
