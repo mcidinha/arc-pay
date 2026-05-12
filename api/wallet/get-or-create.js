@@ -63,7 +63,7 @@ module.exports = async (req, res) => {
       let balance = '0';
       try {
         const balanceRes = await axios.get(
-          `${CIRCLE_BASE_URL}/wallets/${walletRecord.circle_wallet_id}/balances`,
+          `${CIRCLE_BASE_URL}/w3s/wallets/${walletRecord.circle_wallet_id}/balances`,
           { headers: circleHeaders }
         );
         const tokenBalances = balanceRes.data.data.tokenBalances;
