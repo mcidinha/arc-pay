@@ -1,241 +1,580 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DynamicContextProvider, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
 
 const DYNAMIC_ENV_ID = "1718fe30-45da-4a62-b094-53734f7f3f8a";
+const BACKEND_URL = "http://localhost:3001";
 
-const ArcMark = ({ size = 20 }) => (
-  <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-    <path d="M16 4C9.373 4 4 9.373 4 16s5.373 12 12 12 12-5.373 12-12S22.627 4 16 4z" stroke="#7B5FFF" strokeWidth="2.5" fill="none"/>
-    <path d="M10 22 Q16 8 22 22" stroke="#7B5FFF" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-  </svg>
-);
-
-const bubbles = Array.from({ length: 14 }, (_, i) => ({
-  id: i, size: 36 + Math.random() * 48, left: Math.random() * 100,
-  top: Math.random() * 100, delay: Math.random() * 4, duration: 5 + Math.random() * 5,
+const stars = Array.from({ length: 60 }, (_, i) => ({
+  id: i,
+  size: Math.random() < 0.3 ? 2 : 1,
+  left: Math.random() * 100,
+  top: Math.random() * 100,
+  delay: Math.random() * 5,
+  duration: 2 + Math.random() * 3,
 }));
 
-function WalletScreen({ onConnectMetaMask, onConnectDynamic }) {
+const bubbles = Array.from({ length: 10 }, (_, i) => ({
+  id: i,
+  size: 35 + Math.random() * 70,
+  left: Math.random() * 100,
+  top: Math.random() * 100,
+  delay: Math.random() * 4,
+  duration: 6 + Math.random() * 6,
+}));
+
+function USDCIcon({ size = 36 }) {
   return (
-    <div style={{ textAlign: "center", padding: "10px 0 4px" }}>
-      <div style={{ marginBottom: 18 }}>
-        <div style={{ position: "relative", width: 72, height: 72, margin: "0 auto 14px" }}>
-          <div style={{ width: 72, height: 72, borderRadius: "50%", background: "linear-gradient(135deg,#2775CA,#5B8DEF)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32 }}>💵</div>
-          <div style={{ position: "absolute", bottom: -4, right: -4, width: 26, height: 26, borderRadius: "50%", background: "#0f0f1a", border: "2px solid #1a1a2e", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <ArcMark size={18} />
-          </div>
-        </div>
-        <p style={{ color: "#7AAAC8", fontSize: 12, margin: 0 }}>Conecte sua carteira para começar</p>
-      </div>
-      <button onClick={onConnectMetaMask} style={{ width: "100%", padding: "13px 0", marginBottom: 10, borderRadius: 10, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}
-        onMouseEnter={e => e.currentTarget.style.background = "rgba(255,165,0,0.12)"}
-        onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}>
-        <span style={{ fontSize: 20 }}>🦊</span> Conectar com MetaMask
-      </button>
-      <button onClick={onConnectDynamic} style={{ width: "100%", padding: "13px 0", borderRadius: 10, background: "rgba(123,95,255,0.15)", border: "1px solid rgba(123,95,255,0.35)", color: "#B9ADFF", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}
-        onMouseEnter={e => e.currentTarget.style.background = "rgba(123,95,255,0.28)"}
-        onMouseLeave={e => e.currentTarget.style.background = "rgba(123,95,255,0.15)"}>
-        <span style={{ fontSize: 20 }}>🔑</span> Conectar com Dynamic
-      </button>
-      <p style={{ color: "#3A5A70", fontSize: 10.5, marginTop: 14 }}>Dynamic aceita e-mail, Google e outras carteiras</p>
-    </div>
+    <svg width={size} height={size} viewBox="0 0 36 36" fill="none">
+      <circle cx="18" cy="18" r="17" fill="rgba(39,117,202,0.25)" stroke="rgba(99,179,255,0.5)" strokeWidth="1.5"/>
+      <circle cx="18" cy="18" r="12" fill="rgba(39,117,202,0.15)" stroke="rgba(99,179,255,0.25)" strokeWidth="1"/>
+      <text x="18" y="23" textAnchor="middle" fontSize="13" fontWeight="bold" fill="#93c5fd">$</text>
+    </svg>
   );
 }
 
-function CreateScreen({ onViewPay, walletLabel, onDisconnect }) {
-  const [recipient, setRecipient] = useState("");
-  const [amount, setAmount] = useState("");
-  const [desc, setDesc] = useState("");
+function GalaxyBackground() {
   return (
     <>
-      <div style={{ textAlign: "center", marginBottom: 18 }}>
-        <div style={{ position: "relative", width: 72, height: 72, margin: "0 auto 10px" }}>
-          <div style={{ width: 72, height: 72, borderRadius: "50%", background: "linear-gradient(135deg,#2775CA,#5B8DEF)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32 }}>💵</div>
-          <div style={{ position: "absolute", bottom: -4, right: -4, width: 26, height: 26, borderRadius: "50%", background: "#0f0f1a", border: "2px solid #1a1a2e", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <ArcMark size={18} />
-          </div>
-        </div>
-        <p style={{ color: "#7AAAC8", fontSize: 12, margin: 0 }}>Request USDC payments on Arc Testnet.<br />No ETH needed. Predictable dollar fees.</p>
-      </div>
-      {[
-        { label: "RECIPIENT ADDRESS", val: recipient, set: setRecipient, placeholder: "0x..." },
-        { label: "AMOUNT", val: amount, set: setAmount, placeholder: "$ 0.00", type: "number" },
-        { label: "DESCRIPTION", val: desc, set: setDesc, placeholder: "Ex: freelance design, invoice #42..." },
-      ].map(({ label, val, set, placeholder, type }) => (
-        <div key={label} style={{ marginBottom: 12 }}>
-          <label style={{ color: "#4A6A80", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: 5 }}>{label}</label>
-          <input type={type || "text"} value={val} onChange={e => set(e.target.value)} placeholder={placeholder}
-            style={{ width: "100%", padding: "11px 14px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#C8DAEA", fontSize: 13, outline: "none", boxSizing: "border-box" }} />
+      {stars.map(s => (
+        <div key={s.id} style={{
+          position: "fixed", width: s.size, height: s.size,
+          left: s.left + "%", top: s.top + "%",
+          borderRadius: "50%", background: "white",
+          animation: `twinkle ${s.duration}s ease-in-out ${s.delay}s infinite`,
+          pointerEvents: "none", zIndex: 0, opacity: 0.6,
+        }} />
+      ))}
+      {bubbles.map(b => (
+        <div key={b.id} style={{
+          position: "fixed", width: b.size, height: b.size,
+          left: b.left + "%", top: b.top + "%", borderRadius: "50%",
+          background: "radial-gradient(circle at 35% 35%, rgba(74,124,247,0.18), rgba(99,179,255,0.06) 60%, transparent)",
+          border: "1px solid rgba(99,179,255,0.18)",
+          animation: `floatBubble ${b.duration}s ease-in-out ${b.delay}s infinite alternate`,
+          pointerEvents: "none", zIndex: 0,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <USDCIcon size={b.size * 0.45} />
         </div>
       ))}
-      <button onClick={() => { if (recipient && amount) onViewPay({ recipient, amount, desc }); }}
-        style={{ width: "100%", padding: "14px 0", borderRadius: 10, background: "linear-gradient(90deg,#5000FF,#00C2FF)", border: "none", color: "#fff", fontSize: 13, fontWeight: 800, letterSpacing: "0.07em", cursor: "pointer", marginTop: 4 }}>
-        GENERATE PAYMENT LINK
-      </button>
-      <p style={{ color: "#3A5A70", fontSize: 10, textAlign: "center", marginTop: 10 }}>
-        Conectado via {walletLabel} · <span style={{ cursor: "pointer", color: "#5B3FFF" }} onClick={onDisconnect}>Desconectar</span>
-      </p>
+      <div style={{ position: "fixed", width: "600px", height: "600px", left: "-150px", top: "-150px", borderRadius: "50%", background: "radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0, animation: "nebula 10s ease-in-out infinite" }} />
+      <div style={{ position: "fixed", width: "500px", height: "500px", right: "-100px", top: "20%", borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0, animation: "nebula 13s ease-in-out 3s infinite" }} />
+      <div style={{ position: "fixed", width: "400px", height: "400px", left: "10%", bottom: "-100px", borderRadius: "50%", background: "radial-gradient(circle, rgba(20,184,166,0.08) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0, animation: "nebula 11s ease-in-out 6s infinite" }} />
+      <div style={{ position: "fixed", width: "350px", height: "350px", right: "15%", bottom: "10%", borderRadius: "50%", background: "radial-gradient(circle, rgba(245,158,11,0.07) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0, animation: "nebula 9s ease-in-out 2s infinite" }} />
     </>
   );
 }
 
-function HowScreen() {
+const ArcMark = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+    <path d="M16 4C9.373 4 4 9.373 4 16s5.373 12 12 12 12-5.373 12-12S22.627 4 16 4z" stroke="#63b3ff" strokeWidth="2" fill="none"/>
+    <path d="M10 22 Q16 8 22 22" stroke="#63b3ff" strokeWidth="2" fill="none" strokeLinecap="round"/>
+  </svg>
+);
+
+const card = {
+  background: "linear-gradient(145deg, rgba(4,8,20,0.92) 0%, rgba(8,16,40,0.95) 50%, rgba(4,10,25,0.92) 100%)",
+  backdropFilter: "blur(40px)",
+  WebkitBackdropFilter: "blur(40px)",
+  border: "1px solid rgba(74,124,247,0.2)",
+  borderRadius: "28px",
+  padding: "36px 32px",
+  width: "100%",
+  maxWidth: "520px",
+  position: "relative",
+  zIndex: 1,
+  boxShadow: "0 0 60px rgba(74,124,247,0.1), 0 30px 80px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05)",
+};
+
+const inputStyle = {
+  width: "100%", padding: "14px 16px", borderRadius: "12px",
+  border: "1px solid rgba(74,124,247,0.15)", background: "rgba(255,255,255,0.03)",
+  color: "#fff", fontSize: "14px", marginBottom: "12px",
+  boxSizing: "border-box", outline: "none",
+};
+
+const primaryBtn = {
+  width: "100%", padding: "16px", borderRadius: "14px", border: "none",
+  background: "linear-gradient(135deg, #3b6ef7 0%, #1d4ed8 100%)",
+  color: "#fff", fontSize: "15px", fontWeight: "700", cursor: "pointer",
+  boxShadow: "0 8px 30px rgba(59,110,247,0.35)", letterSpacing: "0.02em", marginBottom: "12px",
+};
+
+const secondaryBtn = {
+  width: "100%", padding: "14px", borderRadius: "14px",
+  border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)",
+  color: "#fff", fontSize: "14px", fontWeight: "600", cursor: "pointer",
+  letterSpacing: "0.02em", marginBottom: "12px",
+};
+
+const backBtn = {
+  background: "none", border: "none", color: "rgba(255,255,255,0.4)",
+  fontSize: "13px", cursor: "pointer", display: "flex", alignItems: "center",
+  gap: "6px", marginBottom: "24px", padding: 0,
+};
+
+const labelStyle = {
+  fontSize: "11px", color: "rgba(99,179,255,0.6)", fontWeight: "700",
+  letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "6px", display: "block",
+};
+
+const footer = {
+  textAlign: "center", marginTop: "24px", fontSize: "11px",
+  color: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center",
+  justifyContent: "center", gap: "6px",
+};
+
+const pulseDot = {
+  display: "inline-block", width: "7px", height: "7px",
+  borderRadius: "50%", background: "#22c55e",
+  marginRight: "7px", animation: "pulseDot 2s infinite",
+};
+
+function LoginScreen() {
+  const { setShowAuthFlow } = useDynamicContext();
   return (
-    <div>
-      {[
-        { emoji: "🔗", title: "Connect Wallet", desc: "Use MetaMask or Dynamic (email, Google and more)." },
-        { emoji: "📝", title: "Create Request", desc: "Enter recipient address, amount, and description." },
-        { emoji: "🔗", title: "Share Link", desc: "Send the payment link to anyone." },
-        { emoji: "💸", title: "Receive USDC", desc: "Get paid instantly on Arc Testnet." },
-        { emoji: "🚰", title: "Need test USDC?", desc: <span>Get free USDC on <a href="https://faucet.circle.com/" target="_blank" rel="noreferrer" style={{ color: "#00C2FF" }}>faucet.circle.com</a></span> },
-      ].map((s, i) => (
-        <div key={i} style={{ display: "flex", gap: 14, marginBottom: 16, alignItems: "flex-start" }}>
-          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(80,0,255,0.18)", border: "1px solid rgba(123,47,255,0.40)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>{s.emoji}</div>
-          <div>
-            <p style={{ color: "#9B5FFF", fontSize: 12, fontWeight: 700, margin: "0 0 3px" }}>{s.title}</p>
-            <p style={{ color: "#7AAAC8", fontSize: 12, margin: 0 }}>{s.desc}</p>
+    <div style={card}>
+      <div style={{ position: "absolute", top: -80, left: "50%", transform: "translateX(-50%)", width: 250, height: 250, background: "radial-gradient(circle, rgba(74,124,247,0.25), transparent 70%)", pointerEvents: "none", borderRadius: "50%" }} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "36px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ background: "linear-gradient(135deg, #3b6ef7, #1d4ed8)", borderRadius: "11px", padding: "8px", boxShadow: "0 0 20px rgba(59,110,247,0.4)" }}>
+            <ArcMark size={22} />
           </div>
+          <span style={{ fontSize: "22px", fontWeight: "800", background: "linear-gradient(135deg, #fff, #93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Arc Pay</span>
         </div>
-      ))}
+        <span style={{ background: "rgba(74,124,247,0.15)", border: "1px solid rgba(74,124,247,0.35)", borderRadius: "20px", padding: "5px 14px", fontSize: "11px", color: "#93c5fd", fontWeight: "700", letterSpacing: "0.08em" }}>TESTNET</span>
+      </div>
+      <div style={{ marginBottom: "36px" }}>
+        <h1 style={{ fontSize: "34px", fontWeight: "800", lineHeight: "1.15", marginBottom: "14px", background: "linear-gradient(135deg, #fff 40%, #93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+          Pagamentos USDC na Arc Testnet
+        </h1>
+        <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.45)", lineHeight: "1.7" }}>
+          Envie e receba USDC instantaneamente. Entre com Google, e-mail ou qualquer carteira.
+        </p>
+      </div>
+      <button style={primaryBtn} onClick={() => setShowAuthFlow(true)}>
+        Entrar com Dynamic
+      </button>
+      <div style={{ display: "flex", gap: "12px", marginTop: "8px" }}>
+        {["Google", "E-mail", "Wallet"].map(item => (
+          <div key={item} style={{ flex: 1, background: "rgba(74,124,247,0.05)", border: "1px solid rgba(74,124,247,0.15)", borderRadius: "10px", padding: "10px", textAlign: "center", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>
+            {item}
+          </div>
+        ))}
+      </div>
+      <div style={footer}><ArcMark size={12} />Arc Testnet · Circle USDC · Built with Claude by mcidinha</div>
+    </div>
+  );
+}function Dashboard({ onSend, onLink, onHow, walletData, loadingWallet }) {
+  const { user, primaryWallet, handleLogOut } = useDynamicContext();
+  const address = walletData?.address || primaryWallet?.address || "";
+  const shortAddress = address ? address.slice(0, 8) + "..." + address.slice(-6) : "Criando carteira...";
+  const userEmail = user?.email || "";
+  const balance = walletData?.balance || "0";
+  const [faucetCopied, setFaucetCopied] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const copyAddress = () => {
+    if (address) { navigator.clipboard.writeText(address); setCopied(true); setTimeout(() => setCopied(false), 2000); }
+  };
+  const handleFaucet = () => {
+    if (address) { navigator.clipboard.writeText(address); setFaucetCopied(true); setTimeout(() => setFaucetCopied(false), 3000); }
+  };
+
+  return (
+    <div style={card}>
+      <div style={{ position: "absolute", top: -60, right: -40, width: 220, height: 220, background: "radial-gradient(circle, rgba(74,124,247,0.15), transparent 70%)", pointerEvents: "none", borderRadius: "50%" }} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ background: "linear-gradient(135deg, #3b6ef7, #1d4ed8)", borderRadius: "11px", padding: "7px", boxShadow: "0 0 15px rgba(59,110,247,0.4)" }}>
+            <ArcMark size={20} />
+          </div>
+          <span style={{ fontSize: "19px", fontWeight: "800", background: "linear-gradient(135deg, #fff, #93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Arc Pay</span>
+        </div>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button onClick={onHow} style={{ background: "rgba(74,124,247,0.08)", border: "1px solid rgba(74,124,247,0.2)", borderRadius: "10px", color: "rgba(255,255,255,0.5)", fontSize: "11px", padding: "7px 10px", cursor: "pointer" }}>How it works?</button>
+          <button onClick={handleLogOut} style={{ background: "rgba(74,124,247,0.08)", border: "1px solid rgba(74,124,247,0.2)", borderRadius: "10px", color: "rgba(255,255,255,0.5)", fontSize: "11px", padding: "7px 10px", cursor: "pointer" }}>Sign out</button>
+        </div>
+      </div>
+      {userEmail && (
+        <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginBottom: "14px" }}>
+          <span style={pulseDot} />{userEmail}
+        </div>
+      )}
+      <div style={{ background: "linear-gradient(135deg, rgba(13,26,70,0.9) 0%, rgba(4,12,40,0.95) 100%)", border: "1px solid rgba(74,124,247,0.25)", borderRadius: "20px", padding: "26px", marginBottom: "14px", textAlign: "center", position: "relative", overflow: "hidden", boxShadow: "0 0 40px rgba(74,124,247,0.1)" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "radial-gradient(ellipse at 50% -20%, rgba(74,124,247,0.2) 0%, transparent 65%)", borderRadius: "20px", pointerEvents: "none" }} />
+        <div style={{ fontSize: "10px", color: "rgba(99,179,255,0.65)", fontWeight: "700", letterSpacing: "0.18em", marginBottom: "8px", textTransform: "uppercase" }}>Arc Testnet Balance</div>
+        {loadingWallet ? (
+          <div style={{ fontSize: "16px", color: "rgba(255,255,255,0.4)", padding: "10px" }}>Carregando...</div>
+        ) : (
+          <>
+            <div style={{ fontSize: "56px", fontWeight: "900", lineHeight: 1, background: "linear-gradient(135deg, #ffffff 0%, #c7deff 40%, #63b3ff 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{parseFloat(balance).toFixed(2)}</div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginTop: "10px" }}>
+              <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #2775CA, #1557a0)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "800", color: "white", border: "1.5px solid rgba(99,179,255,0.4)" }}>$</div>
+              <span style={{ color: "#93c5fd", fontSize: "14px", fontWeight: "600", letterSpacing: "0.1em" }}>USDC</span>
+            </div>
+          </>
+        )}
+      </div>
+      <div onClick={copyAddress} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "11px 16px", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", fontFamily: "monospace", flex: 1 }}>{shortAddress}</span>
+        <span style={{ fontSize: "11px", color: copied ? "#4ade80" : "#63b3ff" }}>{copied ? "copiado!" : "copiar"}</span>
+      </div>
+      <a href="https://faucet.circle.com" target="_blank" rel="noreferrer" onClick={handleFaucet}
+        style={{ display: "block", textAlign: "center", marginBottom: "12px", padding: "12px",
+          background: faucetCopied ? "rgba(34,197,94,0.1)" : "rgba(34,197,94,0.06)",
+          border: faucetCopied ? "1px solid rgba(34,197,94,0.35)" : "1px solid rgba(34,197,94,0.18)",
+          borderRadius: "12px", fontSize: "12px",
+          color: faucetCopied ? "#4ade80" : "rgba(74,222,128,0.8)",
+          textDecoration: "none", fontWeight: "600" }}>
+        {faucetCopied ? "✓ Address copied! Paste in faucet" : "✦ Get free USDC on Circle Faucet"}
+      </a>
+      <button onClick={onSend} style={primaryBtn}>Send USDC</button>
+      <button onClick={onLink} style={secondaryBtn}>Generate Payment Link</button>
+      <div style={footer}><ArcMark size={11} />Arc Testnet · Circle USDC · Built with Claude by mcidinha</div>
     </div>
   );
 }
 
-function PayScreen({ data, onBack }) {
-  const link = `https://arcpayapp.com/pay?to=${data.recipient}&amount=${data.amount}&desc=${encodeURIComponent(data.desc)}`;
+function SendScreen({ onBack, walletData }) {
+  const { user } = useDynamicContext();
+  const [toAddress, setToAddress] = useState("");
+  const [amount, setAmount] = useState("");
+  const [email, setEmail] = useState(user?.email || "");
+  const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
+  const hasEmail = !!user?.email;
+  const fromWalletId = walletData?.circle_wallet_id || "";
+
+  const handleSend = async () => {
+    if (!toAddress || !amount) { setStatus("error:Preencha o endereco e o valor."); return; }
+    if (!fromWalletId) { setStatus("error:Carteira nao encontrada."); return; }
+    setLoading(true); setStatus("");
+    try {
+      const res = await fetch(BACKEND_URL + "/payment/send", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fromWalletId, toAddress, amount, email }),
+      });
+      const data = await res.json();
+      if (data.success) setStatus("success");
+      else setStatus("error:" + JSON.stringify(data.error));
+    } catch (e) { setStatus("error:" + e.message); }
+    setLoading(false);
+  };
+
   return (
-    <div style={{ textAlign: "center" }}>
-      <div style={{ background: "rgba(0,194,255,0.07)", border: "1px solid rgba(0,194,255,0.2)", borderRadius: 10, padding: "16px 14px", marginBottom: 16 }}>
-        <p style={{ color: "#4A6A80", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", margin: "0 0 6px" }}>PAYMENT LINK</p>
-        <p style={{ color: "#00C2FF", fontSize: 11, wordBreak: "break-all", margin: 0 }}>{link}</p>
+    <div style={card}>
+      <button style={backBtn} onClick={onBack}>← Back</button>
+      <h2 style={{ fontSize: "26px", fontWeight: "800", marginBottom: "6px", background: "linear-gradient(135deg, #fff, #93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Enviar USDC</h2>
+      <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", marginBottom: "28px" }}>Transferencia instantanea na Arc Testnet</p>
+      {fromWalletId && (
+        <div style={{ background: "rgba(74,124,247,0.06)", border: "1px solid rgba(74,124,247,0.15)", borderRadius: "10px", padding: "10px 14px", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>
+          Carteira: {fromWalletId.slice(0, 16)}...
+        </div>
+      )}
+      <label style={labelStyle}>Endereco destino</label>
+      <input style={inputStyle} placeholder="0x..." value={toAddress} onChange={e => setToAddress(e.target.value)} />
+      <label style={labelStyle}>Valor (USDC)</label>
+      <input style={inputStyle} placeholder="Ex: 1.00" type="number" value={amount} onChange={e => setAmount(e.target.value)} />
+      {!hasEmail && (
+        <>
+          <label style={labelStyle}>E-mail para comprovante</label>
+          <input style={inputStyle} placeholder="seu@email.com" type="email" value={email} onChange={e => setEmail(e.target.value)} />
+        </>
+      )}
+      {hasEmail && (
+        <div style={{ background: "rgba(74,124,247,0.08)", border: "1px solid rgba(74,124,247,0.2)", borderRadius: "10px", padding: "12px 14px", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.5)" }}>
+          <span style={pulseDot} />Comprovante para {user.email}
+        </div>
+      )}
+      <button style={primaryBtn} onClick={handleSend} disabled={loading}>
+        {loading ? "Enviando..." : "Enviar USDC"}
+      </button>
+      {status === "success" && (
+        <div style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "14px", padding: "20px", textAlign: "center", marginTop: "8px" }}>
+          <div style={{ fontWeight: "700", marginBottom: "4px", color: "#4ade80" }}>✓ Payment sent!</div>
+          <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>
+            {email ? "Comprovante enviado para " + email : "Transacao iniciada na Arc Testnet"}
+          </div>
+        </div>
+      )}
+      {status.startsWith("error:") && (
+        <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "14px", padding: "16px", textAlign: "center", marginTop: "8px", fontSize: "13px", color: "#f87171" }}>
+          {status.replace("error:", "")}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LinkScreen({ onBack, walletData }) {
+  const { user, primaryWallet } = useDynamicContext();
+  const address = walletData?.address || primaryWallet?.address || "";
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
+  const [link, setLink] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [recipientEmail, setRecipientEmail] = useState("");
+  const baseUrl = window.location.origin;
+
+  const generateLink = () => {
+    if (!address) { alert("Carteira nao encontrada!"); return; }
+    const params = new URLSearchParams({ to: address });
+    if (amount) params.set("amount", amount);
+    if (description) params.set("desc", description);
+    if (recipientEmail) params.set("recipientEmail", recipientEmail);
+    setLink(baseUrl + "/pay?" + params.toString());
+  };
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div style={card}>
+      <button style={backBtn} onClick={onBack}>← Back</button>
+      <h2 style={{ fontSize: "26px", fontWeight: "800", marginBottom: "6px", background: "linear-gradient(135deg, #fff, #93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Link de Pagamento</h2>
+      <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", marginBottom: "28px" }}>Gere um link para receber USDC de qualquer pessoa</p>
+      <label style={labelStyle}>Valor (opcional)</label>
+      <input style={inputStyle} placeholder="Ex: 10 USDC" type="number" value={amount} onChange={e => setAmount(e.target.value)} />
+      <label style={labelStyle}>Descricao (opcional)</label>
+      <input style={inputStyle} placeholder="Ex: Pagamento do servico X" value={description} onChange={e => setDescription(e.target.value)} />
+      <div style={{ background: "rgba(74,124,247,0.05)", border: "1px solid rgba(74,124,247,0.12)", borderRadius: "12px", padding: "12px 16px", marginBottom: "12px", fontSize: "12px", color: "rgba(255,255,255,0.35)", fontFamily: "monospace" }}>
+        {address ? address.slice(0, 10) + "..." + address.slice(-8) : "Carregando carteira..."}
       </div>
-      <div style={{ display: "flex", gap: 8 }}>
-        <button onClick={() => navigator.clipboard.writeText(link)} style={{ flex: 1, padding: "11px 0", borderRadius: 9, background: "linear-gradient(90deg,#5000FF,#00C2FF)", border: "none", color: "#fff", fontSize: 12, fontWeight: 800, cursor: "pointer" }}>COPY LINK</button>
-        <button onClick={onBack} style={{ flex: 1, padding: "11px 0", borderRadius: 9, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#7AAAC8", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>NEW REQUEST</button>
+      <label style={labelStyle}>E-mail de quem vai receber comprovante (opcional)</label>
+      <input style={inputStyle} placeholder="email@destinatario.com" type="email" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} />
+      <button style={primaryBtn} onClick={generateLink}>Gerar Link</button>
+      {link && (
+        <div style={{ marginTop: "8px" }}>
+          <div style={{ background: "rgba(74,124,247,0.08)", border: "1px solid rgba(74,124,247,0.2)", borderRadius: "12px", padding: "16px", marginBottom: "12px" }}>
+            <div style={{ fontSize: "11px", color: "rgba(99,179,255,0.5)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Seu link de pagamento</div>
+            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", wordBreak: "break-all", fontFamily: "monospace", lineHeight: "1.5" }}>{link}</div>
+          </div>
+          <button onClick={copyLink} style={{ ...secondaryBtn, marginBottom: 0, background: copied ? "rgba(34,197,94,0.1)" : "rgba(255,255,255,0.04)", border: copied ? "1px solid rgba(34,197,94,0.3)" : "1px solid rgba(255,255,255,0.1)", color: copied ? "#4ade80" : "#fff" }}>
+            {copied ? "✓ Copied!" : "Copy Link"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}function PayScreen() {
+  const params = new URLSearchParams(window.location.search);
+  const toAddress = params.get("to") || "";
+  const amount = params.get("amount") || "";
+  const desc = params.get("desc") || "";
+  const recipientEmail = params.get("recipientEmail") || "";
+  const { isAuthenticated, user, primaryWallet } = useDynamicContext();
+  const { setShowAuthFlow } = useDynamicContext();
+  const [walletData, setWalletData] = useState(null);
+  const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState(user?.email || "");
+  const loggedIn = isAuthenticated || !!user || !!primaryWallet;
+  const hasEmail = !!user?.email;
+
+  useEffect(() => {
+    if (!loggedIn) return;
+    const userId = user?.userId || user?.id || primaryWallet?.address || "guest";
+    const userEmail = user?.email || "";
+    fetch(BACKEND_URL + "/wallet/get-or-create", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, email: userEmail }),
+    })
+      .then(r => r.json())
+      .then(data => { if (data.success) setWalletData({ ...data.wallet, balance: data.balance }); })
+      .catch(e => console.error("Erro:", e));
+  }, [loggedIn]);
+
+  const handlePay = async () => {
+    if (!walletData?.circle_wallet_id) { setStatus("error:Carteira nao encontrada."); return; }
+    setLoading(true); setStatus("");
+    try {
+      const res = await fetch(BACKEND_URL + "/payment/send", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fromWalletId: walletData.circle_wallet_id, toAddress, amount, email: user?.email || email, recipientEmail }),
+      });
+      const data = await res.json();
+      if (data.success) setStatus("success");
+      else setStatus("error:" + JSON.stringify(data.error));
+    } catch (e) { setStatus("error:" + e.message); }
+    setLoading(false);
+  };
+
+  return (
+    <div style={card}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: "28px" }}>
+        <div style={{ background: "linear-gradient(135deg, #3b6ef7, #1d4ed8)", borderRadius: "11px", padding: "8px", boxShadow: "0 0 15px rgba(59,110,247,0.4)" }}>
+          <ArcMark size={22} />
+        </div>
+        <span style={{ fontSize: "20px", fontWeight: "800", background: "linear-gradient(135deg, #fff, #93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Arc Pay</span>
+      </div>
+      <div style={{ background: "linear-gradient(135deg, rgba(13,26,70,0.9), rgba(4,12,40,0.95))", border: "1px solid rgba(74,124,247,0.25)", borderRadius: "20px", padding: "28px", marginBottom: "20px", textAlign: "center", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "radial-gradient(ellipse at 50% -20%, rgba(74,124,247,0.2) 0%, transparent 65%)", borderRadius: "20px" }} />
+        <div style={{ fontSize: "10px", color: "rgba(99,179,255,0.65)", fontWeight: "700", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "10px" }}>Valor a Pagar</div>
+        <div style={{ fontSize: "56px", fontWeight: "900", lineHeight: 1, background: "linear-gradient(135deg, #ffffff 0%, #c7deff 40%, #63b3ff 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{amount || "?"}</div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginTop: "10px" }}>
+          <div style={{ width: "22px", height: "22px", borderRadius: "50%", background: "linear-gradient(135deg, #2775CA, #1557a0)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "800", color: "white", border: "1.5px solid rgba(99,179,255,0.4)" }}>$</div>
+          <span style={{ color: "#93c5fd", fontSize: "14px", fontWeight: "600", letterSpacing: "0.1em" }}>USDC</span>
+        </div>
+        {desc && <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", marginTop: "10px" }}>{desc}</div>}
+      </div>
+      <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "12px 16px", marginBottom: "20px", fontSize: "11px", color: "rgba(255,255,255,0.35)", fontFamily: "monospace", wordBreak: "break-all" }}>
+        Para: {toAddress}
+      </div>
+      {!loggedIn ? (
+        <>
+          <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)", marginBottom: "16px", textAlign: "center" }}>
+            Entre para realizar o pagamento
+          </p>
+          <button style={primaryBtn} onClick={() => setShowAuthFlow(true)}>
+            Entrar com Dynamic
+          </button>
+        </>
+      ) : (
+        <>
+          {!hasEmail && (
+            <>
+              <label style={labelStyle}>E-mail para comprovante</label>
+              <input style={inputStyle} placeholder="seu@email.com" type="email" value={email} onChange={e => setEmail(e.target.value)} />
+            </>
+          )}
+          {hasEmail && (
+            <div style={{ background: "rgba(74,124,247,0.08)", border: "1px solid rgba(74,124,247,0.2)", borderRadius: "10px", padding: "12px 14px", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.5)" }}>
+              <span style={pulseDot} />Comprovante para {user.email}
+            </div>
+          )}
+          {recipientEmail && (
+            <div style={{ background: "rgba(74,124,247,0.05)", border: "1px solid rgba(74,124,247,0.12)", borderRadius: "10px", padding: "10px 14px", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>
+              E-mail de quem vai receber: {recipientEmail}
+            </div>
+          )}
+          <button style={primaryBtn} onClick={handlePay} disabled={loading}>
+            {loading ? "Processando..." : "Pagar " + (amount || "?") + " USDC"}
+          </button>
+        </>
+      )}
+      {status === "success" && (
+        <div style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "14px", padding: "20px", textAlign: "center", marginTop: "8px" }}>
+          <div style={{ fontWeight: "700", marginBottom: "4px", color: "#4ade80" }}>✓ Payment confirmed!</div>
+          <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>Transaction confirmed on Arc Testnet</div>
+        </div>
+      )}
+      {status.startsWith("error:") && (
+        <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "14px", padding: "16px", textAlign: "center", marginTop: "8px", fontSize: "13px", color: "#f87171" }}>
+          {status.replace("error:", "")}
+        </div>
+      )}
+      <div style={footer}><ArcMark size={11} />Arc Testnet · Circle USDC · Built with Claude by mcidinha</div>
+    </div>
+  );
+}
+
+function HowScreen({ onBack }) {
+  const steps = [
+    { icon: "⬡", title: "1. Connect your account", desc: "Sign in with Google, email or any Web3 wallet. Instant login with Dynamic Auth - no password to remember." },
+    { icon: "✦", title: "2. Wallet created automatically", desc: "Your USDC wallet on Arc Testnet is created automatically by Circle. No setup, no fees, ready to use." },
+    { icon: "◈", title: "3. Send USDC", desc: "Enter the destination address and amount. USDC is transferred instantly on Arc Testnet and you receive a receipt by email." },
+    { icon: "◎", title: "4. Generate a payment link", desc: "Set the amount and description. Whoever receives the link opens it in the browser, logs in, and pays with USDC." },
+    { icon: "✉", title: "5. Receipt for both sides", desc: "Both the payer and recipient are notified by email with full details of the confirmed transaction." },
+    { icon: "◑", title: "6. Traceable on the blockchain", desc: "Every transaction is publicly recorded on Arc Testnet and can be verified at any time by transaction ID." },
+  ];
+  return (
+    <div style={card}>
+      <button style={backBtn} onClick={onBack}>← Back</button>
+      <h2 style={{ fontSize: "28px", fontWeight: "800", marginBottom: "6px", background: "linear-gradient(135deg, #fff, #93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>How it works</h2>
+      <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", marginBottom: "28px" }}>ArcPay - Simple USDC payments on Arc Testnet</p>
+      {steps.map((step, i) => (
+        <div key={i} style={{ display: "flex", gap: "16px", marginBottom: "12px", padding: "16px 18px", background: "rgba(74,124,247,0.05)", border: "1px solid rgba(74,124,247,0.12)", borderRadius: "14px", alignItems: "flex-start" }}>
+          <div style={{ fontSize: "20px", color: "#63b3ff", minWidth: "28px" }}>{step.icon}</div>
+          <div>
+            <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "4px", color: "#fff" }}>{step.title}</div>
+            <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", lineHeight: "1.5" }}>{step.desc}</div>
+          </div>
+        </div>
+      ))}
+      <div style={{ background: "rgba(74,124,247,0.08)", border: "1px solid rgba(74,124,247,0.2)", borderRadius: "14px", padding: "16px", textAlign: "center", marginTop: "8px" }}>
+        <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", lineHeight: "1.6" }}>
+          Arc Testnet · Circle USDC · Dynamic Auth · Built with Claude by mcidinha
+        </div>
       </div>
     </div>
   );
 }
 
 function InnerApp() {
-  const { setShowAuthFlow, primaryWallet, handleLogOut } = useDynamicContext();
-  const [wallet, setWallet] = useState(null);
-  const [screen, setScreen] = useState("create");
-  const [payData, setPayData] = useState(null);
+  const { isAuthenticated, user, primaryWallet } = useDynamicContext();
+  const [screen, setScreen] = useState("dashboard");
+  const [walletData, setWalletData] = useState(null);
+  const [loadingWallet, setLoadingWallet] = useState(false);
+  const loggedIn = isAuthenticated || !!user || !!primaryWallet;
+  const isPay = window.location.pathname === "/pay";
 
-  if (primaryWallet && !wallet) setWallet("dynamic");
+  if (isPay) return <PayScreen />;
 
-  const connectMetaMask = async () => {
-    if (!window.ethereum) { alert("MetaMask não encontrado! Instale em metamask.io"); return; }
-    try {
-      await window.ethereum.request({ method: "eth_requestAccounts" });
-      setWallet("metamask");
-    } catch (err) { console.error(err); }
-  };
+  useEffect(() => {
+    if (!loggedIn) return;
+    const userId = user?.userId || user?.id || primaryWallet?.address || "guest";
+    const email = user?.email || "";
+    setLoadingWallet(true);
+    fetch(BACKEND_URL + "/wallet/get-or-create", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, email }),
+    })
+      .then(r => r.json())
+      .then(data => { if (data.success) setWalletData({ ...data.wallet, balance: data.balance }); })
+      .catch(e => console.error("Erro:", e))
+      .finally(() => setLoadingWallet(false));
+  }, [loggedIn]);
 
-  const disconnect = async () => {
-    if (wallet === "dynamic") await handleLogOut();
-    setWallet(null); setScreen("create"); setPayData(null);
-  };
-
-  const walletLabel = wallet === "metamask" ? "🦊 MetaMask" : "🔑 Dynamic";
-  const tabs = [{ id: "create", label: "Create Request" }, { id: "how", label: "How It Works" }];
-
-  return (
-    <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse at 50% 50%, #0a1628 0%, #050d1a 50%, #020810 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", position: "relative", overflow: "hidden" }}>
-      <style>{`
-        @keyframes float { 0% { transform: translateY(0px) scale(1) rotate(0deg); } 50% { transform: translateY(-28px) scale(1.08) rotate(3deg); } 100% { transform: translateY(0px) scale(1) rotate(0deg); } }
-        @keyframes pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
-        @keyframes twinkle { 0%, 100% { opacity: 0.1; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
-        @keyframes drift { 0% { transform: translateY(0) translateX(0); } 33% { transform: translateY(-15px) translateX(8px); } 66% { transform: translateY(8px) translateX(-5px); } 100% { transform: translateY(0) translateX(0); } }
-        * { box-sizing: border-box; }
-      `}</style>
-
-      {/* Glow central da galáxia */}
-      <div style={{ position: "absolute", width: "70vw", height: "70vh", left: "50%", top: "50%", transform: "translate(-50%,-50%)", background: "radial-gradient(ellipse, rgba(39,117,202,0.25) 0%, rgba(80,40,180,0.15) 35%, transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
-
-      {/* Partículas azuis brilhantes */}
-      {Array.from({ length: 120 }, (_, i) => {
-        const size = Math.random() * 3 + 1;
-        const brightness = Math.random();
-        return (
-          <div key={`p-${i}`} style={{ position: "absolute", left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%`, width: size, height: size, borderRadius: "50%", background: brightness > 0.7 ? "#ffffff" : brightness > 0.4 ? "#7ec8ff" : "#2775CA", boxShadow: brightness > 0.7 ? `0 0 ${size * 3}px #7ec8ff` : brightness > 0.4 ? `0 0 ${size * 2}px #2775CA` : "none", opacity: Math.random() * 0.6 + 0.3, animation: `twinkle ${2 + Math.random() * 5}s ease-in-out ${Math.random() * 5}s infinite`, pointerEvents: "none" }} />
-        );
-      })}
-
-      {/* Nuvem de partículas concentrada (galáxia) */}
-      {Array.from({ length: 60 }, (_, i) => {
-        const angle = Math.random() * 360;
-        const dist = Math.random() * 35 + 5;
-        const x = 50 + dist * Math.cos(angle * Math.PI / 180);
-        const y = 50 + dist * Math.sin(angle * Math.PI / 180) * 0.5;
-        const size = Math.random() * 4 + 1;
-        return (
-          <div key={`g-${i}`} style={{ position: "absolute", left: `${x}%`, top: `${y}%`, width: size, height: size, borderRadius: "50%", background: "#4a9eff", boxShadow: `0 0 ${size * 4}px #2775CA`, opacity: Math.random() * 0.5 + 0.2, animation: `drift ${4 + Math.random() * 6}s ease-in-out ${Math.random() * 4}s infinite`, pointerEvents: "none" }} />
-        );
-      })}
-
-      {/* Bolhas USDC */}
-      {bubbles.map(b => (
-        <div key={b.id} style={{ position: "absolute", left: `${b.left}%`, top: `${b.top}%`, width: b.size, height: b.size, borderRadius: "50%", background: "radial-gradient(circle at 30% 25%, #4a9eff, #2775CA 50%, #1a4fa0)", border: "2px solid rgba(100,180,255,0.5)", boxShadow: "0 0 25px rgba(39,117,202,0.6), 0 0 50px rgba(39,117,202,0.2), inset 0 0 20px rgba(255,255,255,0.15)", pointerEvents: "none", animation: `float ${b.duration}s ease-in-out ${b.delay}s infinite, pulse ${b.duration * 1.2}s ease-in-out ${b.delay}s infinite`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <svg width={b.size * 0.58} height={b.size * 0.58} viewBox="0 0 100 100" fill="none">
-            <circle cx="50" cy="50" r="50" fill="url(#usdcGrad)"/>
-            <defs>
-              <radialGradient id="usdcGrad" cx="35%" cy="30%">
-                <stop offset="0%" stopColor="#5aabff"/>
-                <stop offset="100%" stopColor="#1a5fb0"/>
-              </radialGradient>
-            </defs>
-            <path d="M50 18C32.3 18 18 32.3 18 50S32.3 82 50 82 82 67.7 82 50 67.7 18 50 18zM50 76C35.6 76 24 64.4 24 50S35.6 24 50 24 76 35.6 76 50 64.4 76 50 76z" fill="rgba(255,255,255,0.3)"/>
-            <path d="M57 35h-4v-4h-6v4c-5.5 1-9 4.8-9 9.5 0 5.5 3.5 8.5 10 10.2v6.8c-2.8-.5-4.5-2.2-4.5-4.5h-5c0 5 3.8 8.8 9.5 9.5V70h6v-3.5c5.8-.7 9.5-4.5 9.5-9.5 0-5.5-3.2-8.2-10-10v-7c2.5.4 4 2 4 4h5c0-4.8-3.5-8.5-9-9.5V35zm-4 10v7c-3-.8-4.5-2.2-4.5-4 0-1.5 1.5-2.8 4.5-3zm5.5 15.5c0 1.8-1.8 3.2-5.5 3.8v-7.5c3.5.9 5.5 2.2 5.5 3.7z" fill="white"/>
-          </svg>
-        </div>
-      ))}
-      <div style={{ width: 370, background: "rgba(10,10,30,0.92)", borderRadius: 20, padding: "22px 24px 20px", border: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(18px)", position: "relative", zIndex: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-            <ArcMark size={22} />
-            <div>
-              <p style={{ color: "#fff", fontSize: 15, fontWeight: 800, margin: 0 }}>Arc Pay</p>
-              <p style={{ color: "#3A5A70", fontSize: 9.5, margin: 0, letterSpacing: "0.06em" }}>BY MCIDINHA · USDC TESTNET</p>
-            </div>
-          </div>
-          <span style={{ background: "rgba(0,194,255,0.12)", border: "1px solid rgba(0,194,255,0.25)", color: "#00C2FF", fontSize: 9.5, fontWeight: 700, padding: "3px 9px", borderRadius: 20 }}>● TESTNET</span>
-        </div>
-
-        {!wallet ? (
-          <WalletScreen onConnectMetaMask={connectMetaMask} onConnectDynamic={() => setShowAuthFlow(true)} />
-        ) : (
-          <>
-            {screen !== "pay" && (
-              <div style={{ display: "flex", gap: 4, marginBottom: 18, background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: 4 }}>
-                {tabs.map(({ id, label }) => (
-                  <button key={id} onClick={() => setScreen(id)} style={{ flex: 1, padding: "9px 0", background: screen === id ? "rgba(80,0,255,0.18)" : "transparent", border: screen === id ? "1px solid rgba(123,47,255,0.40)" : "1px solid transparent", borderRadius: 9, color: screen === id ? "#9B5FFF" : "#3A5A70", fontSize: 11.5, fontWeight: 700, cursor: "pointer" }}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            )}
-            {screen === "create" && <CreateScreen onViewPay={(d) => { setPayData(d); setScreen("pay"); }} walletLabel={walletLabel} onDisconnect={disconnect} />}
-            {screen === "how" && <HowScreen />}
-            {screen === "pay" && <PayScreen data={payData} onBack={() => setScreen("create")} />}
-          </>
-        )}
-
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16 }}>
-          <ArcMark size={14} />
-          <span style={{ color: "#3A5A70", fontSize: 10.5, fontWeight: 600, letterSpacing: "0.05em" }}>Arc Testnet · Circle USDC · Built with Claude</span>
-        </div>
-      </div>
-    </div>
-  );
+  if (!loggedIn) return <LoginScreen />;
+  if (screen === "send") return <SendScreen onBack={() => setScreen("dashboard")} walletData={walletData} />;
+  if (screen === "link") return <LinkScreen onBack={() => setScreen("dashboard")} walletData={walletData} />;
+  if (screen === "how") return <HowScreen onBack={() => setScreen("dashboard")} />;
+  return <Dashboard onSend={() => setScreen("send")} onLink={() => setScreen("link")} onHow={() => setScreen("how")} walletData={walletData} loadingWallet={loadingWallet} />;
 }
 
 export default function App() {
   return (
-    <DynamicContextProvider settings={{ environmentId: DYNAMIC_ENV_ID, walletConnectors: [EthereumWalletConnectors] }} theme="dark">
-      <InnerApp />
-    </DynamicContextProvider>
+    <>
+      <style>{`
+        @keyframes floatBubble {
+          from { transform: translateY(0px) scale(1); opacity: 0.5; }
+          to { transform: translateY(-28px) scale(1.08); opacity: 0.85; }
+        }
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.2; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.3); }
+        }
+        @keyframes nebula {
+          0%, 100% { opacity: 0.6; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.06); }
+        }
+        @keyframes pulseDot {
+          0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
+          70% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+          100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #020510; }
+        input::placeholder { color: rgba(255,255,255,0.2); }
+        input:focus { border-color: rgba(74,124,247,0.5) !important; box-shadow: 0 0 0 3px rgba(74,124,247,0.1); }
+      `}</style>
+      <GalaxyBackground />
+      <DynamicContextProvider
+        settings={{ environmentId: DYNAMIC_ENV_ID, walletConnectors: [EthereumWalletConnectors] }}
+        theme="dark"
+      >
+        <div style={{
+          minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+          padding: "20px", position: "relative",
+        }}>
+          <InnerApp />
+        </div>
+      </DynamicContextProvider>
+    </>
   );
 }
