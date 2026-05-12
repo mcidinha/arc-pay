@@ -83,7 +83,7 @@ module.exports = async (req, res) => {
       {
         idempotencyKey: crypto.randomUUID(),
         entitySecretCiphertext,
-        blockchains: ['ARC-TESTNET'],
+        blockchain: 'ARC-TESTNET',
         count: 1,
       },
       { headers: circleHeaders }
