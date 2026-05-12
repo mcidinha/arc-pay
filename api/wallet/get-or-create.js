@@ -67,7 +67,6 @@ module.exports = async (req, res) => {
       return res.json({ success: true, wallet: walletRecord, balance });
     }
 
-    // Criar nova carteira — sem walletSetId, Circle cria automaticamente
     const entitySecretCiphertext = await getEntitySecretCiphertext();
     const walletRes = await axios.post(
       `${CIRCLE_BASE_URL}/w3s/developer/wallets`,
@@ -76,6 +75,7 @@ module.exports = async (req, res) => {
         entitySecretCiphertext,
         blockchains: ['ARC-TESTNET'],
         count: 1,
+        walletSetId: 'ba091a52-480f-53bd-a7f8-30746f09d50e',
       },
       { headers: circleHeaders }
     );
