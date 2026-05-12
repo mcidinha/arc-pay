@@ -154,7 +154,7 @@ function LoginScreen() {
         </p>
       </div>
       <button style={primaryBtn} onClick={() => setShowAuthFlow(true)}>
-        Entrar com Dynamic
+        Get Started
       </button>
       <div style={{ display: "flex", gap: "12px", marginTop: "8px" }}>
         {["Google", "E-mail", "Wallet"].map(item => (
@@ -431,7 +431,7 @@ function LinkScreen({ onBack, walletData }) {
             Entre para realizar o pagamento
           </p>
           <button style={primaryBtn} onClick={() => setShowAuthFlow(true)}>
-            Entrar com Dynamic
+            Get Started
           </button>
         </>
       ) : (
