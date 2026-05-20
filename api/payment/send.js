@@ -60,7 +60,8 @@ module.exports = async (req, res) => {
           `${CIRCLE_BASE_URL}/w3s/developer/transactions/${transferId}`,
           { headers: circleHeaders }
         );
-        txHash = txDetails.data.data.txHash || '';
+        txHash = txDetails.data.data.transaction?.txHash || '';
+        console.log(`Tentativa ${i + 1} - txHash:`, txHash);
         if (txHash) break;
       } catch (e) {
         console.error('Erro ao buscar txHash:', e.message);
