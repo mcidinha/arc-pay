@@ -131,6 +131,13 @@ const pulseDot = {
   marginRight: "7px", animation: "pulseDot 2s infinite",
 };
 
+const explorerBtn = {
+  display: "block", textAlign: "center", marginTop: "12px", padding: "12px",
+  background: "linear-gradient(135deg, #3b6ef7, #1d4ed8)",
+  borderRadius: "12px", fontSize: "13px", color: "#fff",
+  textDecoration: "none", fontWeight: "700",
+};
+
 function LoginScreen() {
   const { setShowAuthFlow } = useDynamicContext();
   return (
@@ -213,7 +220,6 @@ function Dashboard({ onSend, onLink, onHow, walletData, loadingWallet }) {
           <span style={pulseDot} />{userEmail}
         </div>
       )}
-
       <div style={{ background: "linear-gradient(135deg, rgba(13,26,70,0.9) 0%, rgba(4,12,40,0.95) 100%)", border: "1px solid rgba(74,124,247,0.25)", borderRadius: "20px", padding: "26px", marginBottom: "14px", textAlign: "center", position: "relative", overflow: "hidden", boxShadow: "0 0 40px rgba(74,124,247,0.1)" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "radial-gradient(ellipse at 50% -20%, rgba(74,124,247,0.2) 0%, transparent 65%)", borderRadius: "20px", pointerEvents: "none" }} />
         <div style={{ fontSize: "10px", color: "rgba(99,179,255,0.65)", fontWeight: "700", letterSpacing: "0.18em", marginBottom: "8px", textTransform: "uppercase" }}>Arc Testnet Balance</div>
@@ -229,12 +235,10 @@ function Dashboard({ onSend, onLink, onHow, walletData, loadingWallet }) {
           </>
         )}
       </div>
-
       <div onClick={copyAddress} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "11px 16px", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
         <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", fontFamily: "monospace", flex: 1 }}>{shortAddress}</span>
         <span style={{ fontSize: "11px", color: copied ? "#4ade80" : "#63b3ff" }}>{copied ? "copied!" : "copy"}</span>
       </div>
-
       <a href="https://faucet.circle.com" target="_blank" rel="noreferrer" onClick={handleFaucet}
         style={{ display: "block", textAlign: "center", marginBottom: "12px", padding: "12px",
           background: faucetCopied ? "rgba(34,197,94,0.1)" : "rgba(34,197,94,0.06)",
@@ -244,7 +248,6 @@ function Dashboard({ onSend, onLink, onHow, walletData, loadingWallet }) {
           textDecoration: "none", fontWeight: "600" }}>
         {faucetCopied ? "✓ Address copied! Paste in faucet" : "✦ Get free USDC on Circle Faucet"}
       </a>
-
       <button onClick={onSend} style={primaryBtn}>Send USDC</button>
       <button onClick={onLink} style={secondaryBtn}>Generate Payment Link</button>
       <div style={footer}><ArcMark size={11} />Arc Testnet · Circle USDC · Built with Claude by mcidinha</div>
@@ -258,6 +261,7 @@ function SendScreen({ onBack, walletData }) {
   const [amount, setAmount] = useState("");
   const [email, setEmail] = useState(user?.email || "");
   const [status, setStatus] = useState("");
+  const [txId, setTxId] = useState("");
   const [loading, setLoading] = useState(false);
   const hasEmail = !!user?.email;
   const fromWalletId = walletData?.circle_wallet_id || "";
@@ -265,15 +269,17 @@ function SendScreen({ onBack, walletData }) {
   const handleSend = async () => {
     if (!toAddress || !amount) { setStatus("error:Please fill in the address and amount."); return; }
     if (!fromWalletId) { setStatus("error:Wallet not found."); return; }
-    setLoading(true); setStatus("");
+    setLoading(true); setStatus(""); setTxId("");
     try {
       const res = await fetch(BACKEND_URL + "/payment/send", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fromWalletId, toAddress, amount, email }),
       });
       const data = await res.json();
-      if (data.success) setStatus("success");
-      else setStatus("error:" + JSON.stringify(data.error));
+      if (data.success) {
+        setStatus("success");
+        setTxId(data.transfer?.id || "");
+      } else setStatus("error:" + JSON.stringify(data.error));
     } catch (e) { setStatus("error:" + e.message); }
     setLoading(false);
   };
@@ -312,6 +318,11 @@ function SendScreen({ onBack, walletData }) {
           <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>
             {email ? "Receipt sent to " + email : "Transaction initiated on Arc Testnet"}
           </div>
+          {txId && (
+            <a href={`https://testnet.arcscan.app/tx/${txId}`} target="_blank" rel="noreferrer" style={explorerBtn}>
+              🔍 View on Arc Testnet Explorer
+            </a>
+          )}
         </div>
       )}
       {status.startsWith("error:") && (
@@ -389,6 +400,7 @@ function PayScreen() {
   const [walletData, setWalletData] = useState(null);
   const [loadingWallet, setLoadingWallet] = useState(false);
   const [status, setStatus] = useState("");
+  const [txId, setTxId] = useState("");
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState(user?.email || "");
   const [faucetCopied, setFaucetCopied] = useState(false);
@@ -423,15 +435,17 @@ function PayScreen() {
 
   const handlePay = async () => {
     if (!walletData?.circle_wallet_id) { setStatus("error:Wallet not found."); return; }
-    setLoading(true); setStatus("");
+    setLoading(true); setStatus(""); setTxId("");
     try {
       const res = await fetch(BACKEND_URL + "/payment/send", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fromWalletId: walletData.circle_wallet_id, toAddress, amount, email: user?.email || email, recipientEmail }),
       });
       const data = await res.json();
-      if (data.success) setStatus("success");
-      else setStatus("error:" + JSON.stringify(data.error));
+      if (data.success) {
+        setStatus("success");
+        setTxId(data.transfer?.id || "");
+      } else setStatus("error:" + JSON.stringify(data.error));
     } catch (e) { setStatus("error:" + e.message); }
     setLoading(false);
   };
@@ -445,7 +459,6 @@ function PayScreen() {
         <span style={{ fontSize: "20px", fontWeight: "800", background: "linear-gradient(135deg, #fff, #93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Arc Pay</span>
       </div>
 
-      {/* Valor a pagar */}
       <div style={{ background: "linear-gradient(135deg, rgba(13,26,70,0.9), rgba(4,12,40,0.95))", border: "1px solid rgba(74,124,247,0.25)", borderRadius: "20px", padding: "28px", marginBottom: "16px", textAlign: "center", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "radial-gradient(ellipse at 50% -20%, rgba(74,124,247,0.2) 0%, transparent 65%)", borderRadius: "20px" }} />
         <div style={{ fontSize: "10px", color: "rgba(99,179,255,0.65)", fontWeight: "700", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "10px" }}>Amount to Pay</div>
@@ -476,7 +489,6 @@ function PayScreen() {
         </div>
       ) : (
         <>
-          {/* Saldo da carteira */}
           <div style={{ background: "linear-gradient(135deg, rgba(13,26,70,0.9) 0%, rgba(4,12,40,0.95) 100%)", border: "1px solid rgba(74,124,247,0.25)", borderRadius: "16px", padding: "18px", marginBottom: "12px", textAlign: "center", position: "relative", overflow: "hidden" }}>
             <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "radial-gradient(ellipse at 50% -20%, rgba(74,124,247,0.15) 0%, transparent 65%)", borderRadius: "16px" }} />
             <div style={{ fontSize: "10px", color: "rgba(99,179,255,0.65)", fontWeight: "700", letterSpacing: "0.18em", marginBottom: "6px", textTransform: "uppercase" }}>Your Balance</div>
@@ -487,7 +499,6 @@ function PayScreen() {
             </div>
           </div>
 
-          {/* Endereco da carteira - clicavel para copiar */}
           {address && (
             <div onClick={() => { navigator.clipboard.writeText(address); handleFaucet(); }}
               style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "10px 14px", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
@@ -496,7 +507,6 @@ function PayScreen() {
             </div>
           )}
 
-          {/* Faucet */}
           <a href="https://faucet.circle.com" target="_blank" rel="noreferrer" onClick={handleFaucet}
             style={{ display: "block", textAlign: "center", marginBottom: "16px", padding: "12px",
               background: faucetCopied ? "rgba(34,197,94,0.1)" : "rgba(34,197,94,0.06)",
@@ -507,7 +517,6 @@ function PayScreen() {
             {faucetCopied ? "✓ Address copied! Paste in faucet" : "✦ Get free USDC on Circle Faucet"}
           </a>
 
-          {/* Aviso de saldo insuficiente */}
           {!hasEnoughBalance && (
             <div style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "12px", padding: "12px 16px", marginBottom: "12px", fontSize: "12px", color: "#fbbf24", textAlign: "center" }}>
               ⚠ Insufficient balance. Get free USDC from the faucet above, then refresh the page.
@@ -540,6 +549,11 @@ function PayScreen() {
         <div style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "14px", padding: "20px", textAlign: "center", marginTop: "8px" }}>
           <div style={{ fontWeight: "700", marginBottom: "4px", color: "#4ade80" }}>✓ Payment confirmed!</div>
           <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>Transaction confirmed on Arc Testnet</div>
+          {txId && (
+            <a href={`https://testnet.arcscan.app/tx/${txId}`} target="_blank" rel="noreferrer" style={explorerBtn}>
+              🔍 View on Arc Testnet Explorer
+            </a>
+          )}
         </div>
       )}
       {status.startsWith("error:") && (

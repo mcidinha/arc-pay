@@ -50,6 +50,7 @@ module.exports = async (req, res) => {
     );
     const transfer = response.data.data;
     const txId = transfer?.id || 'N/A';
+    const explorerUrl = `https://testnet.arcscan.app/tx/${txId}`;
     const now = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
     const nowUTC = new Date().toUTCString();
     const emailHtml = `
@@ -61,7 +62,13 @@ module.exports = async (req, res) => {
         <p><b>Date (Brasília):</b> ${now}</p>
         <p><b>Date (UTC):</b> ${nowUTC}</p>
         <p style="color:#4ade80;">✓ Transaction confirmed on Arc Testnet</p>
-        <hr style="border-color:#1e3a5f;"/>
+        <div style="margin-top:16px;">
+          <a href="${explorerUrl}" target="_blank"
+            style="display:inline-block;padding:12px 24px;background:linear-gradient(135deg,#3b6ef7,#1d4ed8);color:#fff;text-decoration:none;border-radius:10px;font-weight:700;font-size:13px;">
+            🔍 View on Arc Testnet Explorer
+          </a>
+        </div>
+        <hr style="border-color:#1e3a5f;margin-top:24px;"/>
         <p style="font-size:12px;color:#666;">Arc Testnet · Circle USDC · Built with Claude by mcidinha</p>
       </div>
     `;
