@@ -51,21 +51,18 @@ module.exports = async (req, res) => {
     const transfer = response.data.data;
     const transferId = transfer?.id || '';
 
-    // Tenta buscar o txHash real por até 3 tentativas
+    // Busca txHash com 1 tentativa de 3 segundos
     let txHash = '';
-    for (let i = 0; i < 3; i++) {
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      try {
-        const txDetails = await axios.get(
-          `${CIRCLE_BASE_URL}/w3s/transactions/${transferId}`,
-          { headers: circleHeaders }
-        );
-        txHash = txDetails.data.data.transaction?.txHash || '';
-        console.log(`Tentativa ${i + 1} - txHash:`, txHash);
-        if (txHash) break;
-      } catch (e) {
-        console.error('Erro ao buscar txHash:', e.message);
-      }
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    try {
+      const txDetails = await axios.get(
+        `${CIRCLE_BASE_URL}/w3s/transactions/${transferId}`,
+        { headers: circleHeaders }
+      );
+      txHash = txDetails.data.data.transaction?.txHash || '';
+      console.log('txHash:', txHash);
+    } catch (e) {
+      console.error('Erro ao buscar txHash:', e.message);
     }
 
     const explorerUrl = txHash
@@ -96,7 +93,7 @@ module.exports = async (req, res) => {
     `;
     if (email) await sendEmail(email, `ArcPay - Receipt ${amount} USDC`, emailHtml);
     if (recipientEmail) await sendEmail(recipientEmail, `ArcPay - You received ${amount} USDC`, emailHtml);
-    return res.json({ success: true, transfer, txHash });
+    return res.json({ success: true, transfer, txHash, transferId });
   } catch (error) {
     console.error(error.response?.data || error.message);
     return res.status(500).json({ error: error.response?.data || error.message });
