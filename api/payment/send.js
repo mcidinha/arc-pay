@@ -51,17 +51,20 @@ module.exports = async (req, res) => {
     const transfer = response.data.data;
     const transferId = transfer?.id || '';
 
-    // Aguarda 4 segundos e busca o txHash real na blockchain
-    await new Promise(resolve => setTimeout(resolve, 4000));
+    // Tenta buscar o txHash real por até 3 tentativas
     let txHash = '';
-    try {
-      const txDetails = await axios.get(
-        `${CIRCLE_BASE_URL}/w3s/developer/transactions/${transferId}`,
-        { headers: circleHeaders }
-      );
-      txHash = txDetails.data.data.txHash || '';
-    } catch (e) {
-      console.error('Erro ao buscar txHash:', e.message);
+    for (let i = 0; i < 3; i++) {
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      try {
+        const txDetails = await axios.get(
+          `${CIRCLE_BASE_URL}/w3s/developer/transactions/${transferId}`,
+          { headers: circleHeaders }
+        );
+        txHash = txDetails.data.data.txHash || '';
+        if (txHash) break;
+      } catch (e) {
+        console.error('Erro ao buscar txHash:', e.message);
+      }
     }
 
     const explorerUrl = txHash
