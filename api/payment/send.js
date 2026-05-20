@@ -49,8 +49,24 @@ module.exports = async (req, res) => {
       { headers: circleHeaders }
     );
     const transfer = response.data.data;
-    const txId = transfer?.id || 'N/A';
-    const explorerUrl = `https://testnet.arcscan.app/tx/${txId}`;
+    const transferId = transfer?.id || '';
+
+    // Aguarda 4 segundos e busca o txHash real na blockchain
+    await new Promise(resolve => setTimeout(resolve, 4000));
+    let txHash = '';
+    try {
+      const txDetails = await axios.get(
+        `${CIRCLE_BASE_URL}/w3s/developer/transactions/${transferId}`,
+        { headers: circleHeaders }
+      );
+      txHash = txDetails.data.data.txHash || '';
+    } catch (e) {
+      console.error('Erro ao buscar txHash:', e.message);
+    }
+
+    const explorerUrl = txHash
+      ? `https://testnet.arcscan.app/tx/${txHash}`
+      : '';
     const now = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
     const nowUTC = new Date().toUTCString();
     const emailHtml = `
@@ -58,23 +74,25 @@ module.exports = async (req, res) => {
         <h2 style="color:#63b3ff;">ArcPay - Transaction Receipt</h2>
         <p><b>Amount:</b> ${amount} USDC</p>
         <p><b>To:</b> ${toAddress}</p>
-        <p><b>Transaction ID:</b> ${txId}</p>
+        <p><b>Transaction ID:</b> ${transferId}</p>
+        ${txHash ? `<p><b>TX Hash:</b> ${txHash}</p>` : ''}
         <p><b>Date (Brasília):</b> ${now}</p>
         <p><b>Date (UTC):</b> ${nowUTC}</p>
         <p style="color:#4ade80;">✓ Transaction confirmed on Arc Testnet</p>
+        ${explorerUrl ? `
         <div style="margin-top:16px;">
           <a href="${explorerUrl}" target="_blank"
             style="display:inline-block;padding:12px 24px;background:linear-gradient(135deg,#3b6ef7,#1d4ed8);color:#fff;text-decoration:none;border-radius:10px;font-weight:700;font-size:13px;">
             🔍 View on Arc Testnet Explorer
           </a>
-        </div>
+        </div>` : ''}
         <hr style="border-color:#1e3a5f;margin-top:24px;"/>
         <p style="font-size:12px;color:#666;">Arc Testnet · Circle USDC · Built with Claude by mcidinha</p>
       </div>
     `;
     if (email) await sendEmail(email, `ArcPay - Receipt ${amount} USDC`, emailHtml);
     if (recipientEmail) await sendEmail(recipientEmail, `ArcPay - You received ${amount} USDC`, emailHtml);
-    return res.json({ success: true, transfer });
+    return res.json({ success: true, transfer, txHash });
   } catch (error) {
     console.error(error.response?.data || error.message);
     return res.status(500).json({ error: error.response?.data || error.message });

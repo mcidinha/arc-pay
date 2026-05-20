@@ -278,7 +278,7 @@ function SendScreen({ onBack, walletData }) {
       const data = await res.json();
       if (data.success) {
         setStatus("success");
-        setTxId(data.transfer?.id || "");
+        setTxId(data.txHash || "");
       } else setStatus("error:" + JSON.stringify(data.error));
     } catch (e) { setStatus("error:" + e.message); }
     setLoading(false);
