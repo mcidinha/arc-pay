@@ -57,7 +57,7 @@ module.exports = async (req, res) => {
       await new Promise(resolve => setTimeout(resolve, 5000));
       try {
         const txDetails = await axios.get(
-          `${CIRCLE_BASE_URL}/w3s/developer/transactions/${transferId}`,
+          `${CIRCLE_BASE_URL}/w3s/transactions/${transferId}`,
           { headers: circleHeaders }
         );
         txHash = txDetails.data.data.transaction?.txHash || '';
