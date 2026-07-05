@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { DynamicContextProvider, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { EthereumWalletConnectors, isEthereumWallet } from "@dynamic-labs/ethereum";
-import { parseUnits, formatUnits, publicActions } from "viem";
+import { parseUnits, formatUnits, publicActions, parseEventLogs } from "viem";
 
 const DYNAMIC_ENV_ID = "1718fe30-45da-4a62-b094-53734f7f3f8a";
 const BACKEND_URL = "/api";
 
 // Contrato ArcPay na Arc Testnet + USDC (interface ERC-20, 6 decimais)
-const ARCPAY_CONTRACT = "0x36435a42B1AA85d999134Ca3263f8356AeD9b48f";
+const ARCPAY_CONTRACT = "0x96e1D2564CB904445eF05688671Ee05c76aedeE4";
 const USDC_CONTRACT = "0x3600000000000000000000000000000000000000";
 
 const USDC_ABI = [
@@ -17,7 +17,15 @@ const USDC_ABI = [
 ];
 
 const ARCPAY_ABI = [
-  { type: "function", name: "pay", stateMutability: "nonpayable", inputs: [{ name: "to", type: "address" }, { name: "amount", type: "uint256" }], outputs: [{ name: "id", type: "uint256" }] },
+  { type: "function", name: "pay", stateMutability: "nonpayable", inputs: [{ name: "to", type: "address" }, { name: "amount", type: "uint256" }, { name: "description", type: "string" }], outputs: [{ name: "id", type: "uint256" }] },
+  { type: "event", name: "PaymentMade", inputs: [
+    { name: "id", type: "uint256", indexed: true },
+    { name: "from", type: "address", indexed: true },
+    { name: "to", type: "address", indexed: true },
+    { name: "amount", type: "uint256", indexed: false },
+    { name: "description", type: "string", indexed: false },
+    { name: "timestamp", type: "uint256", indexed: false },
+  ] },
 ];
 
 const stars = Array.from({ length: 60 }, (_, i) => ({
@@ -195,9 +203,11 @@ function SendScreen({ onBack, walletData }) {
   const isWallet = !!(primaryWallet && isEthereumWallet(primaryWallet));
   const [toAddress, setToAddress] = useState("");
   const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
   const [email, setEmail] = useState(user?.email || "");
   const [status, setStatus] = useState("");
   const [txId, setTxId] = useState("");
+  const [invoice, setInvoice] = useState("");
   const [loading, setLoading] = useState(false);
   const hasEmail = !!user?.email;
   const fromWalletId = walletData?.circle_wallet_id || "";
@@ -207,7 +217,7 @@ function SendScreen({ onBack, walletData }) {
 
     // Caminho onchain: paga pelo contrato ArcPay usando a carteira conectada (ex: MetaMask)
     if (primaryWallet && isEthereumWallet(primaryWallet)) {
-      setLoading(true); setStatus(""); setTxId("");
+      setLoading(true); setStatus(""); setTxId(""); setInvoice("");
       try {
         const walletClient = await primaryWallet.getWalletClient();
         // Le e escreve pela mesma conexao da carteira (MetaMask), que ja esta na Arc
@@ -222,12 +232,24 @@ function SendScreen({ onBack, walletData }) {
         });
         await client.waitForTransactionReceipt({ hash: approveHash });
 
-        // 2) Chama pay(): move o USDC e grava o pagamento no contrato
+        // 2) Chama pay(): move o USDC e grava a invoice no contrato
         const payHash = await client.writeContract({
           address: ARCPAY_CONTRACT, abi: ARCPAY_ABI, functionName: "pay",
-          args: [toAddress.trim(), value], account,
+          args: [toAddress.trim(), value, description], account,
         });
-        await client.waitForTransactionReceipt({ hash: payHash });
+        const receipt = await client.waitForTransactionReceipt({ hash: payHash });
+
+        // Monta o numero da invoice (NNN/MM/AAAA) a partir do evento onchain
+        try {
+          const evs = parseEventLogs({ abi: ARCPAY_ABI, eventName: "PaymentMade", logs: receipt.logs });
+          if (evs.length > 0) {
+            const id = Number(evs[0].args.id);
+            const ts = Number(evs[0].args.timestamp);
+            const d = new Date(ts * 1000);
+            const mm = String(d.getMonth() + 1).padStart(2, "0");
+            setInvoice(String(id + 1).padStart(3, "0") + "/" + mm + "/" + d.getFullYear());
+          }
+        } catch (_) {}
 
         setStatus("success");
         setTxId(payHash);
@@ -271,13 +293,16 @@ function SendScreen({ onBack, walletData }) {
       <input style={inputStyle} placeholder="0x..." value={toAddress} onChange={e => setToAddress(e.target.value)} />
       <label style={labelStyle}>Amount (USDC)</label>
       <input style={inputStyle} placeholder="Ex: 1.00" type="number" value={amount} onChange={e => setAmount(e.target.value)} />
+      <label style={labelStyle}>Descrição do serviço</label>
+      <input style={inputStyle} placeholder="Ex: Consultoria contábil - junho/2026" value={description} onChange={e => setDescription(e.target.value)} />
       {!hasEmail && (<><label style={labelStyle}>Email for receipt</label><input style={inputStyle} placeholder="your@email.com" type="email" value={email} onChange={e => setEmail(e.target.value)} /></>)}
       {hasEmail && <div style={{ background: "rgba(74,124,247,0.08)", border: "1px solid rgba(74,124,247,0.2)", borderRadius: "10px", padding: "12px 14px", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.5)" }}><span style={pulseDot} />Receipt for {user.email}</div>}
       <button style={primaryBtn} onClick={handleSend} disabled={loading}>{loading ? "Sending..." : "Send USDC"}</button>
       {status === "success" && (
         <div style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "14px", padding: "20px", textAlign: "center", marginTop: "8px" }}>
           <div style={{ fontWeight: "700", marginBottom: "4px", color: "#4ade80" }}>✓ Payment sent!</div>
-          <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>{email ? "Receipt sent to " + email : "Transaction initiated on Arc Testnet"}</div>
+          {invoice && <div style={{ fontSize: "15px", color: "#fff", fontWeight: "700", marginBottom: "2px" }}>Invoice Nº {invoice}</div>}
+          <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>Registrado onchain na Arc Testnet</div>
           {txId ? (
             <a href={`https://testnet.arcscan.app/tx/${txId}`} target="_blank" rel="noreferrer" style={explorerBtn}>🔍 View on Arc Testnet Explorer</a>
           ) : (
