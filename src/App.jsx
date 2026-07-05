@@ -1,9 +1,23 @@
 import { useState, useEffect } from "react";
 import { DynamicContextProvider, useDynamicContext } from "@dynamic-labs/sdk-react-core";
-import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
+import { EthereumWalletConnectors, isEthereumWallet } from "@dynamic-labs/ethereum";
+import { parseUnits } from "viem";
 
 const DYNAMIC_ENV_ID = "1718fe30-45da-4a62-b094-53734f7f3f8a";
 const BACKEND_URL = "/api";
+
+// Contrato ArcPay na Arc Testnet + USDC (interface ERC-20, 6 decimais)
+const ARCPAY_CONTRACT = "0x36435a42B1AA85d999134Ca3263f8356AeD9b48f";
+const USDC_CONTRACT = "0x3600000000000000000000000000000000000000";
+
+const USDC_ABI = [
+  { type: "function", name: "approve", stateMutability: "nonpayable", inputs: [{ name: "spender", type: "address" }, { name: "amount", type: "uint256" }], outputs: [{ type: "bool" }] },
+  { type: "function", name: "allowance", stateMutability: "view", inputs: [{ name: "owner", type: "address" }, { name: "spender", type: "address" }], outputs: [{ type: "uint256" }] },
+];
+
+const ARCPAY_ABI = [
+  { type: "function", name: "pay", stateMutability: "nonpayable", inputs: [{ name: "to", type: "address" }, { name: "amount", type: "uint256" }], outputs: [{ name: "id", type: "uint256" }] },
+];
 
 const stars = Array.from({ length: 60 }, (_, i) => ({
   id: i, size: Math.random() < 0.3 ? 2 : 1,
@@ -158,7 +172,7 @@ function Dashboard({ onSend, onLink, onHow, walletData, loadingWallet }) {
 }
 
 function SendScreen({ onBack, walletData }) {
-  const { user } = useDynamicContext();
+  const { user, primaryWallet } = useDynamicContext();
   const [toAddress, setToAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [email, setEmail] = useState(user?.email || "");
@@ -170,6 +184,46 @@ function SendScreen({ onBack, walletData }) {
 
   const handleSend = async () => {
     if (!toAddress || !amount) { setStatus("error:Please fill in the address and amount."); return; }
+
+    // Caminho onchain: paga pelo contrato ArcPay usando a carteira conectada (ex: MetaMask)
+    if (primaryWallet && isEthereumWallet(primaryWallet)) {
+      setLoading(true); setStatus(""); setTxId("");
+      try {
+        const walletClient = await primaryWallet.getWalletClient();
+        const publicClient = await primaryWallet.getPublicClient();
+        const account = primaryWallet.address;
+        const value = parseUnits(String(amount), 6); // USDC = 6 casas decimais
+
+        // 1) Se necessario, aprova o contrato ArcPay a mover seu USDC
+        const allowance = await publicClient.readContract({
+          address: USDC_CONTRACT, abi: USDC_ABI, functionName: "allowance",
+          args: [account, ARCPAY_CONTRACT],
+        });
+        if (allowance < value) {
+          const approveHash = await walletClient.writeContract({
+            address: USDC_CONTRACT, abi: USDC_ABI, functionName: "approve",
+            args: [ARCPAY_CONTRACT, value], account,
+          });
+          await publicClient.waitForTransactionReceipt({ hash: approveHash });
+        }
+
+        // 2) Chama pay(): move o USDC e grava o pagamento no contrato
+        const payHash = await walletClient.writeContract({
+          address: ARCPAY_CONTRACT, abi: ARCPAY_ABI, functionName: "pay",
+          args: [toAddress.trim(), value], account,
+        });
+        await publicClient.waitForTransactionReceipt({ hash: payHash });
+
+        setStatus("success");
+        setTxId(payHash);
+      } catch (e) {
+        setStatus("error:" + (e.shortMessage || e.message || "Falha na transacao"));
+      }
+      setLoading(false);
+      return;
+    }
+
+    // Caminho antigo (Circle/backend), usado no login por email/Google
     if (!fromWalletId) { setStatus("error:Wallet not found."); return; }
     setLoading(true); setStatus(""); setTxId("");
     try {
