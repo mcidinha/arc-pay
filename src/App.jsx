@@ -241,11 +241,13 @@ function SendScreen({ onBack, walletData }) {
 
         // Monta o numero da invoice (NNN/MM/AAAA) a partir do evento onchain
         let invoiceNumber = "";
+        let paymentTs = 0;
         try {
           const evs = parseEventLogs({ abi: ARCPAY_ABI, eventName: "PaymentMade", logs: receipt.logs });
           if (evs.length > 0) {
             const id = Number(evs[0].args.id);
             const ts = Number(evs[0].args.timestamp);
+            paymentTs = ts;
             const d = new Date(ts * 1000);
             const mm = String(d.getMonth() + 1).padStart(2, "0");
             invoiceNumber = String(id + 1).padStart(3, "0") + "/" + mm + "/" + d.getFullYear();
@@ -259,7 +261,7 @@ function SendScreen({ onBack, walletData }) {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               to: email, invoiceNumber, from: account,
-              toAddress: toAddress.trim(), amount, description, txHash: payHash,
+              toAddress: toAddress.trim(), amount, description, txHash: payHash, timestamp: paymentTs,
             }),
           }).catch(() => {});
         }
@@ -306,16 +308,16 @@ function SendScreen({ onBack, walletData }) {
       <input style={inputStyle} placeholder="0x..." value={toAddress} onChange={e => setToAddress(e.target.value)} />
       <label style={labelStyle}>Amount (USDC)</label>
       <input style={inputStyle} placeholder="Ex: 1.00" type="number" value={amount} onChange={e => setAmount(e.target.value)} />
-      <label style={labelStyle}>Descrição do serviço</label>
-      <input style={inputStyle} placeholder="Ex: Consultoria contábil - junho/2026" value={description} onChange={e => setDescription(e.target.value)} />
+      <label style={labelStyle}>Service description</label>
+      <input style={inputStyle} placeholder="Ex: Accounting services - June/2026" value={description} onChange={e => setDescription(e.target.value)} />
       {!hasEmail && (<><label style={labelStyle}>Email for receipt</label><input style={inputStyle} placeholder="your@email.com" type="email" value={email} onChange={e => setEmail(e.target.value)} /></>)}
       {hasEmail && <div style={{ background: "rgba(74,124,247,0.08)", border: "1px solid rgba(74,124,247,0.2)", borderRadius: "10px", padding: "12px 14px", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.5)" }}><span style={pulseDot} />Receipt for {user.email}</div>}
       <button style={primaryBtn} onClick={handleSend} disabled={loading}>{loading ? "Sending..." : "Send USDC"}</button>
       {status === "success" && (
         <div style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "14px", padding: "20px", textAlign: "center", marginTop: "8px" }}>
           <div style={{ fontWeight: "700", marginBottom: "4px", color: "#4ade80" }}>✓ Payment sent!</div>
-          {invoice && <div style={{ fontSize: "15px", color: "#fff", fontWeight: "700", marginBottom: "2px" }}>Invoice Nº {invoice}</div>}
-          <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>Registrado onchain na Arc Testnet</div>
+          {invoice && <div style={{ fontSize: "15px", color: "#fff", fontWeight: "700", marginBottom: "2px" }}>Invoice #{invoice}</div>}
+          <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>Recorded onchain on Arc Testnet</div>
           {txId ? (
             <a href={`https://testnet.arcscan.app/tx/${txId}`} target="_blank" rel="noreferrer" style={explorerBtn}>🔍 View on Arc Testnet Explorer</a>
           ) : (
