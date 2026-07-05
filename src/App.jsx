@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { DynamicContextProvider, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { EthereumWalletConnectors, isEthereumWallet } from "@dynamic-labs/ethereum";
-import { parseUnits, formatUnits } from "viem";
+import { parseUnits, formatUnits, publicActions } from "viem";
 
 const DYNAMIC_ENV_ID = "1718fe30-45da-4a62-b094-53734f7f3f8a";
 const BACKEND_URL = "/api";
@@ -132,8 +132,9 @@ function Dashboard({ onSend, onLink, onHow, walletData, loadingWallet }) {
     if (!isWallet) { setOnchainBalance(null); return; }
     (async () => {
       try {
-        const publicClient = await primaryWallet.getPublicClient();
-        const raw = await publicClient.readContract({
+        const walletClient = await primaryWallet.getWalletClient();
+        const client = walletClient.extend(publicActions);
+        const raw = await client.readContract({
           address: USDC_CONTRACT, abi: USDC_ABI, functionName: "balanceOf", args: [primaryWallet.address],
         });
         if (active) setOnchainBalance(formatUnits(raw, 6));
@@ -191,6 +192,7 @@ function Dashboard({ onSend, onLink, onHow, walletData, loadingWallet }) {
 
 function SendScreen({ onBack, walletData }) {
   const { user, primaryWallet } = useDynamicContext();
+  const isWallet = !!(primaryWallet && isEthereumWallet(primaryWallet));
   const [toAddress, setToAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [email, setEmail] = useState(user?.email || "");
@@ -208,29 +210,30 @@ function SendScreen({ onBack, walletData }) {
       setLoading(true); setStatus(""); setTxId("");
       try {
         const walletClient = await primaryWallet.getWalletClient();
-        const publicClient = await primaryWallet.getPublicClient();
+        // Le e escreve pela mesma conexao da carteira (MetaMask), que ja esta na Arc
+        const client = walletClient.extend(publicActions);
         const account = primaryWallet.address;
         const value = parseUnits(String(amount), 6); // USDC = 6 casas decimais
 
         // 1) Se necessario, aprova o contrato ArcPay a mover seu USDC
-        const allowance = await publicClient.readContract({
+        const allowance = await client.readContract({
           address: USDC_CONTRACT, abi: USDC_ABI, functionName: "allowance",
           args: [account, ARCPAY_CONTRACT],
         });
         if (allowance < value) {
-          const approveHash = await walletClient.writeContract({
+          const approveHash = await client.writeContract({
             address: USDC_CONTRACT, abi: USDC_ABI, functionName: "approve",
             args: [ARCPAY_CONTRACT, value], account,
           });
-          await publicClient.waitForTransactionReceipt({ hash: approveHash });
+          await client.waitForTransactionReceipt({ hash: approveHash });
         }
 
         // 2) Chama pay(): move o USDC e grava o pagamento no contrato
-        const payHash = await walletClient.writeContract({
+        const payHash = await client.writeContract({
           address: ARCPAY_CONTRACT, abi: ARCPAY_ABI, functionName: "pay",
           args: [toAddress.trim(), value], account,
         });
-        await publicClient.waitForTransactionReceipt({ hash: payHash });
+        await client.waitForTransactionReceipt({ hash: payHash });
 
         setStatus("success");
         setTxId(payHash);
@@ -269,7 +272,7 @@ function SendScreen({ onBack, walletData }) {
       <button style={backBtn} onClick={onBack}>← Back</button>
       <h2 style={{ fontSize: "26px", fontWeight: "800", marginBottom: "6px", background: "linear-gradient(135deg, #fff, #93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Send USDC</h2>
       <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", marginBottom: "28px" }}>Instant transfer on Arc Testnet</p>
-      {fromWalletId && <div style={{ background: "rgba(74,124,247,0.06)", border: "1px solid rgba(74,124,247,0.15)", borderRadius: "10px", padding: "10px 14px", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>Wallet: {fromWalletId.slice(0, 16)}...</div>}
+      {(isWallet ? primaryWallet.address : fromWalletId) && <div style={{ background: "rgba(74,124,247,0.06)", border: "1px solid rgba(74,124,247,0.15)", borderRadius: "10px", padding: "10px 14px", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>Wallet: {(isWallet ? primaryWallet.address : fromWalletId).slice(0, 16)}...</div>}
       <label style={labelStyle}>Destination address</label>
       <input style={inputStyle} placeholder="0x..." value={toAddress} onChange={e => setToAddress(e.target.value)} />
       <label style={labelStyle}>Amount (USDC)</label>
