@@ -193,6 +193,25 @@ function Dashboard({ onSend, onLink, onHow, walletData, loadingWallet }) {
       </a>
       <button onClick={onSend} style={primaryBtn}>Send USDC</button>
       <button onClick={onLink} style={secondaryBtn}>Generate Payment Link</button>
+
+      <div style={{ background: "rgba(74,124,247,0.05)", border: "1px solid rgba(74,124,247,0.12)", borderRadius: "12px", padding: "14px 16px", marginTop: "18px" }}>
+        <div style={{ fontSize: "12px", fontWeight: "700", color: "#63b3ff", marginBottom: "10px", letterSpacing: "0.03em" }}>POWERED BY ARC L1</div>
+        <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.6)", lineHeight: "1.8" }}>
+          <div>⚡ USDC as native gas — fees always in USD, predictable and cheap</div>
+          <div>✓ Finality in under 1 second</div>
+          <div>✓ Fully EVM (works with MetaMask)</div>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: "8px", marginTop: "16px", fontSize: "11px", color: "rgba(255,255,255,0.25)" }}>
+        <a href="https://www.arc.io/" target="_blank" rel="noreferrer" style={{ color: "#63b3ff", textDecoration: "none" }}>Official Arc Site</a>
+        <span>·</span>
+        <a href="https://docs.arc.io/" target="_blank" rel="noreferrer" style={{ color: "#63b3ff", textDecoration: "none" }}>Documentation</a>
+        <span>·</span>
+        <a href="https://testnet.arcscan.app/" target="_blank" rel="noreferrer" style={{ color: "#63b3ff", textDecoration: "none" }}>Testnet Explorer</a>
+        <span>·</span>
+        <a href="https://testnet.arcscan.app/address/0x96e1D2564CB904445eF05688671Ee05c76aedeE4" target="_blank" rel="noreferrer" style={{ color: "#63b3ff", textDecoration: "none" }}>My Contract</a>
+      </div>
       <div style={footer}><ArcMark size={11} />Arc Testnet · Circle USDC · Built with Claude by mcidinha</div>
     </div>
   );
