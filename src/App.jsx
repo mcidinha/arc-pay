@@ -240,6 +240,7 @@ function SendScreen({ onBack, walletData }) {
         const receipt = await client.waitForTransactionReceipt({ hash: payHash });
 
         // Monta o numero da invoice (NNN/MM/AAAA) a partir do evento onchain
+        let invoiceNumber = "";
         try {
           const evs = parseEventLogs({ abi: ARCPAY_ABI, eventName: "PaymentMade", logs: receipt.logs });
           if (evs.length > 0) {
@@ -247,9 +248,21 @@ function SendScreen({ onBack, walletData }) {
             const ts = Number(evs[0].args.timestamp);
             const d = new Date(ts * 1000);
             const mm = String(d.getMonth() + 1).padStart(2, "0");
-            setInvoice(String(id + 1).padStart(3, "0") + "/" + mm + "/" + d.getFullYear());
+            invoiceNumber = String(id + 1).padStart(3, "0") + "/" + mm + "/" + d.getFullYear();
+            setInvoice(invoiceNumber);
           }
         } catch (_) {}
+
+        // Envia o e-mail da invoice ao cliente (remetente entra em copia pelo backend)
+        if (email) {
+          fetch(BACKEND_URL + "/invoice-email", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              to: email, invoiceNumber, from: account,
+              toAddress: toAddress.trim(), amount, description, txHash: payHash,
+            }),
+          }).catch(() => {});
+        }
 
         setStatus("success");
         setTxId(payHash);
