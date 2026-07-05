@@ -215,18 +215,12 @@ function SendScreen({ onBack, walletData }) {
         const account = primaryWallet.address;
         const value = parseUnits(String(amount), 6); // USDC = 6 casas decimais
 
-        // 1) Se necessario, aprova o contrato ArcPay a mover seu USDC
-        const allowance = await client.readContract({
-          address: USDC_CONTRACT, abi: USDC_ABI, functionName: "allowance",
-          args: [account, ARCPAY_CONTRACT],
+        // 1) Aprova o contrato ArcPay a mover o USDC (sem checar allowance - diagnostico)
+        const approveHash = await client.writeContract({
+          address: USDC_CONTRACT, abi: USDC_ABI, functionName: "approve",
+          args: [ARCPAY_CONTRACT, value], account,
         });
-        if (allowance < value) {
-          const approveHash = await client.writeContract({
-            address: USDC_CONTRACT, abi: USDC_ABI, functionName: "approve",
-            args: [ARCPAY_CONTRACT, value], account,
-          });
-          await client.waitForTransactionReceipt({ hash: approveHash });
-        }
+        await client.waitForTransactionReceipt({ hash: approveHash });
 
         // 2) Chama pay(): move o USDC e grava o pagamento no contrato
         const payHash = await client.writeContract({
