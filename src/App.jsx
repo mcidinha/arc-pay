@@ -195,9 +195,9 @@ function Dashboard({ onSend, onLink, onHow, walletData, loadingWallet }) {
       <button onClick={onLink} style={secondaryBtn}>Generate Payment Link</button>
 
       <div style={{ background: "rgba(74,124,247,0.05)", border: "1px solid rgba(74,124,247,0.12)", borderRadius: "12px", padding: "18px 18px", marginTop: "18px" }}>
-        <div style={{ fontSize: "13px", fontWeight: "700", color: "#63b3ff", marginBottom: "12px", letterSpacing: "0.03em" }}>POWERED BY ARC L1</div>
-        <div style={{ fontSize: "13.5px", color: "rgba(255,255,255,0.65)", lineHeight: "1.9" }}>
-          <div>⚡ USDC as native gas — fees always in USD, predictable and cheap</div>
+        <div style={{ fontSize: "15px", fontWeight: "700", color: "#63b3ff", marginBottom: "12px", letterSpacing: "0.03em" }}>POWERED BY ARC L1</div>
+        <div style={{ fontSize: "15px", color: "rgba(255,255,255,0.65)", lineHeight: "1.9" }}>
+          <div>⚡ USDC as native gas: fees always in USD, predictable and cheap</div>
           <div>✓ Finality in under 1 second</div>
           <div>✓ Fully EVM (works with MetaMask)</div>
         </div>
