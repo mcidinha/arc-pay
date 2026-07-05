@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { DynamicContextProvider, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { EthereumWalletConnectors, isEthereumWallet } from "@dynamic-labs/ethereum";
-import { parseUnits } from "viem";
+import { parseUnits, formatUnits } from "viem";
 
 const DYNAMIC_ENV_ID = "1718fe30-45da-4a62-b094-53734f7f3f8a";
 const BACKEND_URL = "/api";
@@ -13,6 +13,7 @@ const USDC_CONTRACT = "0x3600000000000000000000000000000000000000";
 const USDC_ABI = [
   { type: "function", name: "approve", stateMutability: "nonpayable", inputs: [{ name: "spender", type: "address" }, { name: "amount", type: "uint256" }], outputs: [{ type: "bool" }] },
   { type: "function", name: "allowance", stateMutability: "view", inputs: [{ name: "owner", type: "address" }, { name: "spender", type: "address" }], outputs: [{ type: "uint256" }] },
+  { type: "function", name: "balanceOf", stateMutability: "view", inputs: [{ name: "account", type: "address" }], outputs: [{ type: "uint256" }] },
 ];
 
 const ARCPAY_ABI = [
@@ -120,10 +121,27 @@ function LoginScreen() {
 
 function Dashboard({ onSend, onLink, onHow, walletData, loadingWallet }) {
   const { user, primaryWallet, handleLogOut } = useDynamicContext();
-  const address = walletData?.address || primaryWallet?.address || "";
+  const isWallet = !!(primaryWallet && isEthereumWallet(primaryWallet));
+  // Login por carteira: mostra a carteira conectada. Email/Google: mantem a carteira Circle.
+  const address = isWallet ? primaryWallet.address : (walletData?.address || "");
   const shortAddress = address ? address.slice(0, 8) + "..." + address.slice(-6) : "Creating wallet...";
   const userEmail = user?.email || "";
-  const balance = walletData?.balance || "0";
+  const [onchainBalance, setOnchainBalance] = useState(null);
+  useEffect(() => {
+    let active = true;
+    if (!isWallet) { setOnchainBalance(null); return; }
+    (async () => {
+      try {
+        const publicClient = await primaryWallet.getPublicClient();
+        const raw = await publicClient.readContract({
+          address: USDC_CONTRACT, abi: USDC_ABI, functionName: "balanceOf", args: [primaryWallet.address],
+        });
+        if (active) setOnchainBalance(formatUnits(raw, 6));
+      } catch (e) { if (active) setOnchainBalance("0"); }
+    })();
+    return () => { active = false; };
+  }, [isWallet, primaryWallet?.address]);
+  const balance = isWallet ? (onchainBalance ?? "0") : (walletData?.balance || "0");
   const [faucetCopied, setFaucetCopied] = useState(false);
   const [copied, setCopied] = useState(false);
 
