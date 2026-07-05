@@ -45,6 +45,7 @@ module.exports = async (req, res) => {
     await transporter.sendMail({
       from: process.env.EMAIL_SENDER,
       to,
+      cc: process.env.EMAIL_SENDER,
       subject: `Invoice Nº ${invoiceNumber || ''} - Arc Pay`,
       html,
     });
