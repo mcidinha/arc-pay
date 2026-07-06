@@ -346,7 +346,7 @@ function SendScreen({ onBack, walletData }) {
 
 function LinkScreen({ onBack, walletData }) {
   const { user, primaryWallet } = useDynamicContext();
-  const address = walletData?.address || primaryWallet?.address || "";
+  const address = primaryWallet?.address || walletData?.address || "";
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [link, setLink] = useState("");
