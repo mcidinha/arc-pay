@@ -117,11 +117,6 @@ function LoginScreen() {
         <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.45)", lineHeight: "1.7" }}>Send and receive USDC instantly. Sign in with Google, email or any wallet.</p>
       </div>
       <button style={primaryBtn} onClick={() => setShowAuthFlow(true)}>Get Started</button>
-      <div style={{ display: "flex", gap: "12px", marginTop: "8px" }}>
-        {["Google", "E-mail", "Wallet"].map(item => (
-          <div key={item} style={{ flex: 1, background: "rgba(74,124,247,0.05)", border: "1px solid rgba(74,124,247,0.15)", borderRadius: "10px", padding: "10px", textAlign: "center", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>{item}</div>
-        ))}
-      </div>
       <div style={footer}><ArcMark size={12} />Arc Testnet · Circle USDC · Built with Claude by mcidinha</div>
     </div>
   );
