@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { DynamicContextProvider, useDynamicContext, FilterChain } from "@dynamic-labs/sdk-react-core";
+import { DynamicContextProvider, useDynamicContext, FilterChain, useWalletOptions } from "@dynamic-labs/sdk-react-core";
 import { EthereumWalletConnectors, isEthereumWallet } from "@dynamic-labs/ethereum";
 import { parseUnits, formatUnits, publicActions, parseEventLogs } from "viem";
 
@@ -621,6 +621,12 @@ function HowScreen({ onBack }) {
 
 function InnerApp() {
   const { isAuthenticated, user, primaryWallet } = useDynamicContext();
+  const { walletOptions } = useWalletOptions();
+  useEffect(() => {
+    if (walletOptions && walletOptions.length) {
+      console.log("WALLET KEYS:", walletOptions.map(w => w.key));
+    }
+  }, [walletOptions]);
   const [screen, setScreen] = useState("dashboard");
   const [walletData, setWalletData] = useState(null);
   const [loadingWallet, setLoadingWallet] = useState(false);
