@@ -593,11 +593,10 @@ function PayScreen() {
 function HowScreen({ onBack }) {
   const steps = [
     { icon: "⬡", title: "1. Sign in", desc: "Connect your Web3 wallet (MetaMask or any compatible wallet) for instant, secure access." },
-    { icon: "✦", title: "2. Use your EVM wallet", desc: "Use your own connected EVM wallet to pay in USDC on Arc Testnet." },
-    { icon: "◈", title: "3. Send USDC", desc: "Enter the destination address and amount. USDC is transferred instantly on Arc Testnet and you receive a receipt by email." },
-    { icon: "◎", title: "4. Generate a payment link", desc: "Set the amount and description. Whoever receives the link opens it in the browser, connects the wallet, and pays with USDC." },
-    { icon: "✉", title: "5. Receipt for both sides", desc: "Both the payer and recipient are notified by email with full details of the confirmed transaction." },
-    { icon: "◑", title: "6. Traceable on the blockchain", desc: "Every transaction is publicly recorded on Arc Testnet and can be verified at any time by transaction ID." },
+    { icon: "◈", title: "2. Send USDC", desc: "Enter the destination address and amount. USDC is transferred instantly on Arc Testnet and you receive a receipt by email." },
+    { icon: "◎", title: "3. Generate a payment link", desc: "Set the amount and description. Whoever receives the link opens it in the browser, connects the wallet, and pays with USDC." },
+    { icon: "✉", title: "4. Receipt for both sides", desc: "Both the payer and recipient are notified by email with full details of the confirmed transaction." },
+    { icon: "◑", title: "5. Traceable on the blockchain", desc: "Every transaction is publicly recorded on Arc Testnet and can be verified at any time by transaction ID." },
   ];
   return (
     <div style={card}>
