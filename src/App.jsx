@@ -412,13 +412,16 @@ function PayScreen() {
   const [loadingWallet, setLoadingWallet] = useState(false);
   const [status, setStatus] = useState("");
   const [txId, setTxId] = useState("");
+  const [invoice, setInvoice] = useState("");
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState(user?.email || "");
   const [faucetCopied, setFaucetCopied] = useState(false);
+  const [onchainBalance, setOnchainBalance] = useState(null);
+  const isWallet = !!(primaryWallet && isEthereumWallet(primaryWallet));
   const loggedIn = isAuthenticated || !!user || !!primaryWallet;
   const hasEmail = !!user?.email;
-  const balance = walletData?.balance || "0";
-  const address = walletData?.address || "";
+  const balance = isWallet ? (onchainBalance ?? "0") : (walletData?.balance || "0");
+  const address = isWallet ? primaryWallet.address : (walletData?.address || "");
   const hasEnoughBalance = parseFloat(balance) >= parseFloat(amount || "0");
 
   useEffect(() => {
@@ -434,7 +437,74 @@ function PayScreen() {
 
   const handleFaucet = () => { if (address) { navigator.clipboard.writeText(address); setFaucetCopied(true); setTimeout(() => setFaucetCopied(false), 3000); } };
 
+  useEffect(() => {
+    let active = true;
+    if (!isWallet) { setOnchainBalance(null); return; }
+    (async () => {
+      try {
+        const wc = await primaryWallet.getWalletClient();
+        const client = wc.extend(publicActions);
+        const raw = await client.readContract({ address: USDC_CONTRACT, abi: USDC_ABI, functionName: "balanceOf", args: [primaryWallet.address] });
+        if (active) setOnchainBalance(formatUnits(raw, 6));
+      } catch (e) { if (active) setOnchainBalance("0"); }
+    })();
+    return () => { active = false; };
+  }, [isWallet, primaryWallet?.address]);
+
   const handlePay = async () => {
+    // Caminho onchain: paga pelo contrato com a carteira conectada
+    if (isWallet) {
+      setLoading(true); setStatus(""); setTxId(""); setInvoice("");
+      try {
+        const walletClient = await primaryWallet.getWalletClient();
+        const client = walletClient.extend(publicActions);
+        const account = primaryWallet.address;
+        const value = parseUnits(String(amount || "0"), 6);
+
+        const approveHash = await client.writeContract({
+          address: USDC_CONTRACT, abi: USDC_ABI, functionName: "approve",
+          args: [ARCPAY_CONTRACT, value], account,
+        });
+        await client.waitForTransactionReceipt({ hash: approveHash });
+
+        const payHash = await client.writeContract({
+          address: ARCPAY_CONTRACT, abi: ARCPAY_ABI, functionName: "pay",
+          args: [toAddress, value, desc], account,
+        });
+        const receipt = await client.waitForTransactionReceipt({ hash: payHash });
+
+        let invoiceNumber = "";
+        let paymentTs = 0;
+        try {
+          const evs = parseEventLogs({ abi: ARCPAY_ABI, eventName: "PaymentMade", logs: receipt.logs });
+          if (evs.length > 0) {
+            const id = Number(evs[0].args.id);
+            paymentTs = Number(evs[0].args.timestamp);
+            const d = new Date(paymentTs * 1000);
+            const mm = String(d.getMonth() + 1).padStart(2, "0");
+            invoiceNumber = String(id + 1).padStart(3, "0") + "/" + mm + "/" + d.getFullYear();
+            setInvoice(invoiceNumber);
+          }
+        } catch (_) {}
+
+        const emailTo = recipientEmail || email;
+        if (emailTo) {
+          fetch(BACKEND_URL + "/invoice-email", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ to: emailTo, invoiceNumber, from: account, toAddress, amount, description: desc, txHash: payHash, timestamp: paymentTs }),
+          }).catch(() => {});
+        }
+
+        setStatus("success");
+        setTxId(payHash);
+      } catch (e) {
+        setStatus("error:" + (e.shortMessage || e.message || "Falha na transacao"));
+      }
+      setLoading(false);
+      return;
+    }
+
+    // Caminho antigo (Circle/backend), usado no login por email/Google
     if (!walletData?.circle_wallet_id) { setStatus("error:Wallet not found."); return; }
     setLoading(true); setStatus(""); setTxId("");
     try {
@@ -476,7 +546,7 @@ function PayScreen() {
       <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "12px 16px", marginBottom: "16px", fontSize: "11px", color: "rgba(255,255,255,0.35)", fontFamily: "monospace", wordBreak: "break-all" }}>To: {toAddress}</div>
       {!loggedIn ? (
         <><p style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)", marginBottom: "16px", textAlign: "center" }}>Sign in to complete payment</p><button style={primaryBtn} onClick={() => setShowAuthFlow(true)}>Get Started</button></>
-      ) : loadingWallet ? (
+      ) : (loadingWallet && !isWallet) ? (
         <div style={{ textAlign: "center", padding: "20px", color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Creating your wallet...</div>
       ) : (
         <>
@@ -510,7 +580,8 @@ function PayScreen() {
       {status === "success" && (
         <div style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "14px", padding: "20px", textAlign: "center", marginTop: "8px" }}>
           <div style={{ fontWeight: "700", marginBottom: "4px", color: "#4ade80" }}>✓ Payment confirmed!</div>
-          <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>Transaction confirmed on Arc Testnet</div>
+          {invoice && <div style={{ fontSize: "15px", color: "#fff", fontWeight: "700", marginBottom: "2px" }}>Invoice #{invoice}</div>}
+          <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>Recorded onchain on Arc Testnet</div>
           {txId ? (
             <a href={`https://testnet.arcscan.app/tx/${txId}`} target="_blank" rel="noreferrer" style={explorerBtn}>🔍 View on Arc Testnet Explorer</a>
           ) : (
