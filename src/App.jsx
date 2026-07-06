@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { DynamicContextProvider, useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { DynamicContextProvider, useDynamicContext, FilterChain } from "@dynamic-labs/sdk-react-core";
 import { EthereumWalletConnectors, isEthereumWallet } from "@dynamic-labs/ethereum";
 import { parseUnits, formatUnits, publicActions, parseEventLogs } from "viem";
 
@@ -661,7 +661,7 @@ export default function App() {
         input:focus { border-color: rgba(74,124,247,0.5) !important; box-shadow: 0 0 0 3px rgba(74,124,247,0.1); }
       `}</style>
       <GalaxyBackground />
-      <DynamicContextProvider settings={{ environmentId: DYNAMIC_ENV_ID, walletConnectors: [EthereumWalletConnectors] }} theme="dark">
+      <DynamicContextProvider settings={{ environmentId: DYNAMIC_ENV_ID, walletConnectors: [EthereumWalletConnectors], walletsFilter: FilterChain("EVM") }} theme="dark">
         <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", position: "relative" }}>
           <InnerApp />
         </div>
