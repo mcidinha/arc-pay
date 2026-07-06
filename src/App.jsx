@@ -592,8 +592,8 @@ function PayScreen() {
 
 function HowScreen({ onBack }) {
   const steps = [
-    { icon: "⬡", title: "1. Sign in", desc: "Google or email via Dynamic Auth for instant, passwordless login. Or connect your own Web3 wallet." },
-    { icon: "✦", title: "2. Your USDC wallet", desc: "Signing in via email/Google automatically creates a wallet for you. Or connect and use your own." },
+    { icon: "⬡", title: "1. Sign in", desc: "Connect your Web3 wallet (MetaMask or any compatible wallet) for instant, secure access." },
+    { icon: "✦", title: "2. Your USDC wallet", desc: "Use your own connected wallet to send and receive USDC on Arc Testnet." },
     { icon: "◈", title: "3. Send USDC", desc: "Enter the destination address and amount. USDC is transferred instantly on Arc Testnet and you receive a receipt by email." },
     { icon: "◎", title: "4. Generate a payment link", desc: "Set the amount and description. Whoever receives the link opens it in the browser, logs in, and pays with USDC." },
     { icon: "✉", title: "5. Receipt for both sides", desc: "Both the payer and recipient are notified by email with full details of the confirmed transaction." },
