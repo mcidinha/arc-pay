@@ -122,12 +122,11 @@ function LoginScreen() {
   );
 }
 
-function Dashboard({ onSend, onLink, onHow, walletData, loadingWallet }) {
+function Dashboard({ onSend, onLink, onHow }) {
   const { user, primaryWallet, handleLogOut } = useDynamicContext();
   const isWallet = !!(primaryWallet && isEthereumWallet(primaryWallet));
-  // Login por carteira: mostra a carteira conectada. Email/Google: mantem a carteira Circle.
-  const address = isWallet ? primaryWallet.address : (walletData?.address || "");
-  const shortAddress = address ? address.slice(0, 8) + "..." + address.slice(-6) : "Creating wallet...";
+  const address = isWallet ? primaryWallet.address : "";
+  const shortAddress = address ? address.slice(0, 8) + "..." + address.slice(-6) : "";
   const userEmail = user?.email || "";
   const [onchainBalance, setOnchainBalance] = useState(null);
   useEffect(() => {
@@ -145,7 +144,7 @@ function Dashboard({ onSend, onLink, onHow, walletData, loadingWallet }) {
     })();
     return () => { active = false; };
   }, [isWallet, primaryWallet?.address]);
-  const balance = isWallet ? (onchainBalance ?? "0") : (walletData?.balance || "0");
+  const balance = isWallet ? (onchainBalance ?? "0") : "0";
   const [faucetCopied, setFaucetCopied] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -169,7 +168,7 @@ function Dashboard({ onSend, onLink, onHow, walletData, loadingWallet }) {
       <div style={{ background: "linear-gradient(135deg, rgba(13,26,70,0.9) 0%, rgba(4,12,40,0.95) 100%)", border: "1px solid rgba(74,124,247,0.25)", borderRadius: "20px", padding: "26px", marginBottom: "14px", textAlign: "center", position: "relative", overflow: "hidden", boxShadow: "0 0 40px rgba(74,124,247,0.1)" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "radial-gradient(ellipse at 50% -20%, rgba(74,124,247,0.2) 0%, transparent 65%)", borderRadius: "20px", pointerEvents: "none" }} />
         <div style={{ fontSize: "10px", color: "rgba(99,179,255,0.65)", fontWeight: "700", letterSpacing: "0.18em", marginBottom: "8px", textTransform: "uppercase" }}>Arc Testnet Balance</div>
-        {loadingWallet ? <div style={{ fontSize: "16px", color: "rgba(255,255,255,0.4)", padding: "10px" }}>Loading...</div> : (
+        {isWallet && onchainBalance === null ? <div style={{ fontSize: "16px", color: "rgba(255,255,255,0.4)", padding: "10px" }}>Loading...</div> : (
           <>
             <div style={{ fontSize: "56px", fontWeight: "900", lineHeight: 1, background: "linear-gradient(135deg, #ffffff 0%, #c7deff 40%, #63b3ff 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{parseFloat(balance).toFixed(2)}</div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginTop: "10px" }}>
@@ -321,9 +320,9 @@ function SendScreen({ onBack }) {
   );
 }
 
-function LinkScreen({ onBack, walletData }) {
+function LinkScreen({ onBack }) {
   const { user, primaryWallet } = useDynamicContext();
-  const address = primaryWallet?.address || walletData?.address || "";
+  const address = primaryWallet?.address || "";
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [link, setLink] = useState("");
@@ -592,7 +591,7 @@ function InnerApp() {
   if (screen === "send") return <SendScreen onBack={() => setScreen("dashboard")} />;
   if (screen === "link") return <LinkScreen onBack={() => setScreen("dashboard")} />;
   if (screen === "how") return <HowScreen onBack={() => setScreen("dashboard")} />;
-  return <Dashboard onSend={() => setScreen("send")} onLink={() => setScreen("link")} onHow={() => setScreen("how")} loadingWallet={false} />;
+  return <Dashboard onSend={() => setScreen("send")} onLink={() => setScreen("link")} onHow={() => setScreen("how")} />;
 }
 
 export default function App() {
