@@ -424,8 +424,6 @@ function PayScreen() {
   const recipientEmail = params.get("recipientEmail") || "";
   const { isAuthenticated, user, primaryWallet } = useDynamicContext();
   const { setShowAuthFlow } = useDynamicContext();
-  const [walletData, setWalletData] = useState(null);
-  const [loadingWallet, setLoadingWallet] = useState(false);
   const [status, setStatus] = useState("");
   const [txId, setTxId] = useState("");
   const [invoice, setInvoice] = useState("");
@@ -436,20 +434,9 @@ function PayScreen() {
   const isWallet = !!(primaryWallet && isEthereumWallet(primaryWallet));
   const loggedIn = isAuthenticated || !!user || !!primaryWallet;
   const hasEmail = !!user?.email;
-  const balance = isWallet ? (onchainBalance ?? "0") : (walletData?.balance || "0");
-  const address = isWallet ? primaryWallet.address : (walletData?.address || "");
+  const balance = isWallet ? (onchainBalance ?? "0") : "0";
+  const address = isWallet ? primaryWallet.address : "";
   const hasEnoughBalance = parseFloat(balance) >= parseFloat(amount || "0");
-
-  useEffect(() => {
-    if (!loggedIn) return;
-    const userId = user?.userId || user?.id || primaryWallet?.address || "guest";
-    const userEmail = user?.email || "";
-    setLoadingWallet(true);
-    fetch(BACKEND_URL + "/wallet/get-or-create", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, email: userEmail }),
-    }).then(r => r.json()).then(data => { if (data.success) setWalletData({ ...data.wallet, balance: data.balance }); }).catch(e => console.error("Erro:", e)).finally(() => setLoadingWallet(false));
-  }, [loggedIn]);
 
   const handleFaucet = () => { if (address) { navigator.clipboard.writeText(address); setFaucetCopied(true); setTimeout(() => setFaucetCopied(false), 3000); } };
 
@@ -519,28 +506,6 @@ function PayScreen() {
       setLoading(false);
       return;
     }
-
-    // Caminho antigo (Circle/backend), usado no login por email/Google
-    if (!walletData?.circle_wallet_id) { setStatus("error:Wallet not found."); return; }
-    setLoading(true); setStatus(""); setTxId("");
-    try {
-      const res = await fetch(BACKEND_URL + "/payment/send", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fromWalletId: walletData.circle_wallet_id, toAddress, amount, email: user?.email || email, recipientEmail }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setStatus("success");
-        const tid = data.transferId || data.transfer?.id || "";
-        if (tid) {
-          setTimeout(async () => {
-            const hash = await fetchTxHash(tid);
-            if (hash) setTxId(hash);
-          }, 6000);
-        }
-      } else setStatus("error:" + JSON.stringify(data.error));
-    } catch (e) { setStatus("error:" + e.message); }
-    setLoading(false);
   };
 
   return (
@@ -562,8 +527,6 @@ function PayScreen() {
       <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "12px 16px", marginBottom: "16px", fontSize: "11px", color: "rgba(255,255,255,0.35)", fontFamily: "monospace", wordBreak: "break-all" }}>To: {toAddress}</div>
       {!loggedIn ? (
         <><p style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)", marginBottom: "16px", textAlign: "center" }}>Sign in to complete payment</p><button style={primaryBtn} onClick={() => setShowAuthFlow(true)}>Get Started</button></>
-      ) : (loadingWallet && !isWallet) ? (
-        <div style={{ textAlign: "center", padding: "20px", color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Creating your wallet...</div>
       ) : (
         <>
           <div style={{ background: "linear-gradient(135deg, rgba(13,26,70,0.9) 0%, rgba(4,12,40,0.95) 100%)", border: "1px solid rgba(74,124,247,0.25)", borderRadius: "16px", padding: "18px", marginBottom: "12px", textAlign: "center", position: "relative", overflow: "hidden" }}>
