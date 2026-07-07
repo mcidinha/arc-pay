@@ -358,8 +358,8 @@ function LinkScreen({ onBack }) {
       <div style={{ background: "rgba(74,124,247,0.05)", border: "1px solid rgba(74,124,247,0.12)", borderRadius: "12px", padding: "12px 16px", marginBottom: "12px", fontSize: "12px", color: "rgba(255,255,255,0.35)", fontFamily: "monospace" }}>
         {address ? address.slice(0, 10) + "..." + address.slice(-8) : "Loading wallet..."}
       </div>
-      <label style={labelStyle}>Recipient email for receipt (optional)</label>
-      <input style={inputStyle} placeholder="email@recipient.com" type="email" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} />
+      <label style={labelStyle}>Customer email (optional)</label>
+      <input style={inputStyle} placeholder="customer@email.com" type="email" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} />
       <button style={primaryBtn} onClick={generateAndSend} disabled={sending}>{sending ? "Sending..." : "Generate & Send Link"}</button>
       {sendStatus === "sent" && <div style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "12px", padding: "12px 16px", marginBottom: "12px", fontSize: "13px", color: "#4ade80", textAlign: "center" }}>✓ Link sent to {recipientEmail}</div>}
       {sendStatus === "error" && <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "12px", padding: "12px 16px", marginBottom: "12px", fontSize: "13px", color: "#f87171", textAlign: "center" }}>Link generated, but the email could not be sent.</div>}
@@ -390,7 +390,7 @@ function PayScreen() {
   const [txId, setTxId] = useState("");
   const [invoice, setInvoice] = useState("");
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState(user?.email || "");
+  const [email, setEmail] = useState(recipientEmail || user?.email || "");
   const [faucetCopied, setFaucetCopied] = useState(false);
   const [onchainBalance, setOnchainBalance] = useState(null);
   const isWallet = !!(primaryWallet && isEthereumWallet(primaryWallet));
@@ -511,8 +511,7 @@ function PayScreen() {
           </a>
           {!hasEnoughBalance && <div style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "12px", padding: "12px 16px", marginBottom: "12px", fontSize: "12px", color: "#fbbf24", textAlign: "center" }}>⚠ Insufficient balance. Get free USDC from the faucet above, then refresh the page.</div>}
           {hasEmail && <div style={{ background: "rgba(74,124,247,0.08)", border: "1px solid rgba(74,124,247,0.2)", borderRadius: "10px", padding: "12px 14px", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.5)" }}><span style={pulseDot} />Receipt for {user.email}</div>}
-          {!hasEmail && (<><label style={labelStyle}>Email for receipt</label><input style={inputStyle} placeholder="your@email.com" type="email" value={email} onChange={e => setEmail(e.target.value)} /></>)}
-          {recipientEmail && <div style={{ background: "rgba(74,124,247,0.05)", border: "1px solid rgba(74,124,247,0.12)", borderRadius: "10px", padding: "10px 14px", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>Recipient email: {recipientEmail}</div>}
+          {!hasEmail && (<><label style={labelStyle}>Email for payment receipt</label><input style={inputStyle} placeholder="your@email.com" type="email" value={email} onChange={e => setEmail(e.target.value)} /></>)}
           <button style={{ ...primaryBtn, opacity: hasEnoughBalance ? 1 : 0.4, cursor: hasEnoughBalance ? "pointer" : "not-allowed" }} onClick={handlePay} disabled={loading || !hasEnoughBalance}>
             {loading ? "Processing..." : "Pay " + (amount || "?") + " USDC"}
           </button>
