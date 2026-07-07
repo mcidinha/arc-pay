@@ -352,15 +352,34 @@ function LinkScreen({ onBack, walletData }) {
   const [link, setLink] = useState("");
   const [copied, setCopied] = useState(false);
   const [recipientEmail, setRecipientEmail] = useState("");
+  const [sendStatus, setSendStatus] = useState("");
+  const [sending, setSending] = useState(false);
   const baseUrl = window.location.origin;
 
-  const generateLink = () => {
+  const generateAndSend = async () => {
     if (!address) { alert("Wallet not found!"); return; }
     const params = new URLSearchParams({ to: address });
     if (amount) params.set("amount", amount);
     if (description) params.set("desc", description);
     if (recipientEmail) params.set("recipientEmail", recipientEmail);
-    setLink(baseUrl + "/pay?" + params.toString());
+    const newLink = baseUrl + "/pay?" + params.toString();
+    setLink(newLink);
+    setSendStatus("");
+
+    // Se houver email, gera o link E envia por email de uma vez
+    if (recipientEmail) {
+      setSending(true);
+      try {
+        const res = await fetch(BACKEND_URL + "/link-email", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ to: recipientEmail, amount, description, link: newLink }),
+        });
+        const data = await res.json();
+        if (data.success) setSendStatus("sent");
+        else setSendStatus("error");
+      } catch (e) { setSendStatus("error"); }
+      setSending(false);
+    }
   };
 
   const copyLink = () => { navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 2000); };
@@ -379,7 +398,9 @@ function LinkScreen({ onBack, walletData }) {
       </div>
       <label style={labelStyle}>Recipient email for receipt (optional)</label>
       <input style={inputStyle} placeholder="email@recipient.com" type="email" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} />
-      <button style={primaryBtn} onClick={generateLink}>Generate Link</button>
+      <button style={primaryBtn} onClick={generateAndSend} disabled={sending}>{sending ? "Sending..." : "Generate & Send Link"}</button>
+      {sendStatus === "sent" && <div style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "12px", padding: "12px 16px", marginBottom: "12px", fontSize: "13px", color: "#4ade80", textAlign: "center" }}>✓ Link sent to {recipientEmail}</div>}
+      {sendStatus === "error" && <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "12px", padding: "12px 16px", marginBottom: "12px", fontSize: "13px", color: "#f87171", textAlign: "center" }}>Link generated, but the email could not be sent.</div>}
       {link && (
         <div style={{ marginTop: "8px" }}>
           <div style={{ background: "rgba(74,124,247,0.08)", border: "1px solid rgba(74,124,247,0.2)", borderRadius: "12px", padding: "16px", marginBottom: "12px" }}>
