@@ -615,7 +615,7 @@ function HowScreen({ onBack }) {
   const steps = [
     { icon: "⬡", title: "1. Sign in", desc: "Connect your Web3 wallet (MetaMask or any compatible wallet) for instant, secure access." },
     { icon: "◈", title: "2. Send USDC", desc: "Enter the destination address and amount. USDC is transferred instantly on Arc Testnet and you receive a receipt by email." },
-    { icon: "◎", title: "3. Generate a payment link", desc: "Set the amount and description. Whoever receives the link opens it in the browser, connects the wallet, and pays with USDC." },
+    { icon: "◎", title: "3. Generate & send a payment link", desc: "Set the amount and description, and optionally send the link by email. Whoever receives it opens the link in the browser, connects the wallet, and pays with USDC." },
     { icon: "✉", title: "4. Receipt for both sides", desc: "Both the payer and recipient are notified by email with full details of the confirmed transaction." },
     { icon: "◑", title: "5. Traceable on the blockchain", desc: "Every transaction is publicly recorded on Arc Testnet and can be verified at any time by transaction ID." },
   ];
