@@ -212,7 +212,7 @@ function Dashboard({ onSend, onLink, onHow, walletData, loadingWallet }) {
   );
 }
 
-function SendScreen({ onBack, walletData }) {
+function SendScreen({ onBack }) {
   const { user, primaryWallet } = useDynamicContext();
   const isWallet = !!(primaryWallet && isEthereumWallet(primaryWallet));
   const [toAddress, setToAddress] = useState("");
@@ -224,7 +224,6 @@ function SendScreen({ onBack, walletData }) {
   const [invoice, setInvoice] = useState("");
   const [loading, setLoading] = useState(false);
   const hasEmail = !!user?.email;
-  const fromWalletId = walletData?.circle_wallet_id || "";
 
   const handleSend = async () => {
     if (!toAddress || !amount) { setStatus("error:Please fill in the address and amount."); return; }
@@ -288,28 +287,6 @@ function SendScreen({ onBack, walletData }) {
       setLoading(false);
       return;
     }
-
-    // Caminho antigo (Circle/backend), usado no login por email/Google
-    if (!fromWalletId) { setStatus("error:Wallet not found."); return; }
-    setLoading(true); setStatus(""); setTxId("");
-    try {
-      const res = await fetch(BACKEND_URL + "/payment/send", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fromWalletId, toAddress, amount, email }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setStatus("success");
-        const tid = data.transferId || data.transfer?.id || "";
-        if (tid) {
-          setTimeout(async () => {
-            const hash = await fetchTxHash(tid);
-            if (hash) setTxId(hash);
-          }, 6000);
-        }
-      } else setStatus("error:" + JSON.stringify(data.error));
-    } catch (e) { setStatus("error:" + e.message); }
-    setLoading(false);
   };
 
   return (
@@ -317,7 +294,7 @@ function SendScreen({ onBack, walletData }) {
       <button style={backBtn} onClick={onBack}>← Back</button>
       <h2 style={{ fontSize: "26px", fontWeight: "800", marginBottom: "6px", background: "linear-gradient(135deg, #fff, #93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Send USDC</h2>
       <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", marginBottom: "28px" }}>Instant transfer on Arc Testnet</p>
-      {(isWallet ? primaryWallet.address : fromWalletId) && <div style={{ background: "rgba(74,124,247,0.06)", border: "1px solid rgba(74,124,247,0.15)", borderRadius: "10px", padding: "10px 14px", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>Wallet: {(isWallet ? primaryWallet.address : fromWalletId).slice(0, 16)}...</div>}
+      {isWallet && primaryWallet.address && <div style={{ background: "rgba(74,124,247,0.06)", border: "1px solid rgba(74,124,247,0.15)", borderRadius: "10px", padding: "10px 14px", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>Wallet: {primaryWallet.address.slice(0, 16)}...</div>}
       <label style={labelStyle}>Destination address</label>
       <input style={inputStyle} placeholder="0x..." value={toAddress} onChange={e => setToAddress(e.target.value)} />
       <label style={labelStyle}>Amount (USDC)</label>
