@@ -86,20 +86,6 @@ const footer = { textAlign: "center", marginTop: "24px", fontSize: "11px", color
 const pulseDot = { display: "inline-block", width: "7px", height: "7px", borderRadius: "50%", background: "#22c55e", marginRight: "7px", animation: "pulseDot 2s infinite" };
 const explorerBtn = { display: "block", textAlign: "center", marginTop: "12px", padding: "12px", background: "linear-gradient(135deg, #3b6ef7, #1d4ed8)", borderRadius: "12px", fontSize: "13px", color: "#fff", textDecoration: "none", fontWeight: "700" };
 
-async function fetchTxHash(transferId) {
-  try {
-    const res = await fetch(BACKEND_URL + "/transaction/status", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ transferId }),
-    });
-    const data = await res.json();
-    return data.txHash || "";
-  } catch (e) {
-    console.error("Erro ao buscar txHash:", e);
-    return "";
-  }
-}
-
 function LoginScreen() {
   const { setShowAuthFlow } = useDynamicContext();
   return (
