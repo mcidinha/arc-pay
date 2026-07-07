@@ -643,29 +643,16 @@ function HowScreen({ onBack }) {
 function InnerApp() {
   const { isAuthenticated, user, primaryWallet } = useDynamicContext();
   const [screen, setScreen] = useState("dashboard");
-  const [walletData, setWalletData] = useState(null);
-  const [loadingWallet, setLoadingWallet] = useState(false);
   const loggedIn = isAuthenticated || !!user || !!primaryWallet;
   const isPay = window.location.pathname === "/pay";
 
   if (isPay) return <PayScreen />;
 
-  useEffect(() => {
-    if (!loggedIn) return;
-    const userId = user?.userId || user?.id || primaryWallet?.address || "guest";
-    const email = user?.email || "";
-    setLoadingWallet(true);
-    fetch(BACKEND_URL + "/wallet/get-or-create", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, email }),
-    }).then(r => r.json()).then(data => { if (data.success) setWalletData({ ...data.wallet, balance: data.balance }); }).catch(e => console.error("Erro:", e)).finally(() => setLoadingWallet(false));
-  }, [loggedIn]);
-
   if (!loggedIn) return <LoginScreen />;
-  if (screen === "send") return <SendScreen onBack={() => setScreen("dashboard")} walletData={walletData} />;
-  if (screen === "link") return <LinkScreen onBack={() => setScreen("dashboard")} walletData={walletData} />;
+  if (screen === "send") return <SendScreen onBack={() => setScreen("dashboard")} />;
+  if (screen === "link") return <LinkScreen onBack={() => setScreen("dashboard")} />;
   if (screen === "how") return <HowScreen onBack={() => setScreen("dashboard")} />;
-  return <Dashboard onSend={() => setScreen("send")} onLink={() => setScreen("link")} onHow={() => setScreen("how")} walletData={walletData} loadingWallet={loadingWallet} />;
+  return <Dashboard onSend={() => setScreen("send")} onLink={() => setScreen("link")} onHow={() => setScreen("how")} loadingWallet={false} />;
 }
 
 export default function App() {
